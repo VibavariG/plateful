@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: plateful
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/plateful
+    username: your_db_user
+    password: your_db_pass
+
+  sql:
+    init:
+      mode: always
+
