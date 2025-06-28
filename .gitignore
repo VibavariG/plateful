@@ -1,0 +1,14 @@
+# Java / Spring Boot
+plateful-backend/target/
+**/*.class
+*.log
+
+# Node / React (for when you add frontend)
+plateful-frontend/node_modules/
+plateful-frontend/build/
+*.env
+
+# System files
+.DS_Store
+.idea/
+.vscode/
