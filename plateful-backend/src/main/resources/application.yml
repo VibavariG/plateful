@@ -3,10 +3,12 @@ spring:
     name: plateful
   r2dbc:
     url: r2dbc:postgresql://localhost:5432/plateful
-    username: your_db_user
-    password: your_db_pass
-
+    username: viba
+    password: secret
   sql:
     init:
-      mode: always
+      mode: never
 
+logging:
+  level:
+    org.springframework.r2dbc: DEBUG
