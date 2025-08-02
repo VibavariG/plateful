@@ -1,13 +1,11 @@
-package com.foodplanner.plateful.dto;
+package com.foodplanner.plateful.model.dto;
 
-import com.foodplanner.plateful.model.Unit;
+import com.foodplanner.plateful.model.enums.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor

@@ -1,5 +1,6 @@
-package com.foodplanner.plateful.model;
+package com.foodplanner.plateful.model.entities;
 
+import com.foodplanner.plateful.model.enums.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Table("ingredients")
+import static com.foodplanner.plateful.utils.Constants.INGREDIENTS;
+
+@Table(INGREDIENTS)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

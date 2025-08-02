@@ -1,9 +1,8 @@
 package com.foodplanner.plateful.controller;
 
-import com.foodplanner.plateful.dto.CreateIngredientRequest;
-import com.foodplanner.plateful.model.Ingredient;
-import com.foodplanner.plateful.model.Unit;
-import com.foodplanner.plateful.repository.IngredientRepository;
+import com.foodplanner.plateful.model.dto.CreateIngredientRequest;
+import com.foodplanner.plateful.model.entities.Ingredient;
+import com.foodplanner.plateful.model.repository.IngredientRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 

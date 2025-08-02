@@ -1,4 +1,4 @@
-package com.foodplanner.plateful.dto;
+package com.foodplanner.plateful.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

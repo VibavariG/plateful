@@ -1,14 +1,14 @@
 package com.foodplanner.plateful.controller;
 
-import com.foodplanner.plateful.dto.CreateRecipeRequest;
-import com.foodplanner.plateful.dto.RecipeIngredientDTO;
-import com.foodplanner.plateful.dto.RecipeWithIngredientDTO;
-import com.foodplanner.plateful.model.Ingredient;
-import com.foodplanner.plateful.model.Recipe;
-import com.foodplanner.plateful.model.RecipeIngredient;
-import com.foodplanner.plateful.repository.IngredientRepository;
-import com.foodplanner.plateful.repository.RecipeIngredientRepository;
-import com.foodplanner.plateful.repository.RecipeRepository;
+import com.foodplanner.plateful.model.dto.CreateRecipeRequest;
+import com.foodplanner.plateful.model.dto.RecipeIngredientDTO;
+import com.foodplanner.plateful.model.dto.RecipeWithIngredientDTO;
+import com.foodplanner.plateful.model.entities.Ingredient;
+import com.foodplanner.plateful.model.entities.Recipe;
+import com.foodplanner.plateful.model.entities.RecipeIngredient;
+import com.foodplanner.plateful.model.repository.IngredientRepository;
+import com.foodplanner.plateful.model.repository.RecipeIngredientRepository;
+import com.foodplanner.plateful.model.repository.RecipeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -27,6 +27,12 @@ public class RecipeController {
     private final RecipeRepository recipeRepo;
     private final RecipeIngredientRepository recipeIngredientRepo;
     private final IngredientRepository ingredientRepo;
+
+    public RecipeController(RecipeRepository recipeRepo, RecipeIngredientRepository recipeIngredientRepo, IngredientRepository ingredientRepo) {
+        this.recipeRepo = recipeRepo;
+        this.recipeIngredientRepo = recipeIngredientRepo;
+        this.ingredientRepo = ingredientRepo;
+    }
 
     @GetMapping
     public Flux<RecipeWithIngredientDTO> getAllRecipes() {
