@@ -28,12 +28,6 @@ public class RecipeController {
     private final RecipeIngredientRepository recipeIngredientRepo;
     private final IngredientRepository ingredientRepo;
 
-    public RecipeController(RecipeRepository recipeRepo, RecipeIngredientRepository recipeIngredientRepo, IngredientRepository ingredientRepo) {
-        this.recipeRepo = recipeRepo;
-        this.recipeIngredientRepo = recipeIngredientRepo;
-        this.ingredientRepo = ingredientRepo;
-    }
-
     @GetMapping
     public Flux<RecipeWithIngredientDTO> getAllRecipes() {
         return recipeRepo.findAll()

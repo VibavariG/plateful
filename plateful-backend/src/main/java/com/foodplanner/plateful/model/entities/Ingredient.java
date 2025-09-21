@@ -20,30 +20,58 @@ import static com.foodplanner.plateful.utils.Constants.INGREDIENTS;
 public class Ingredient {
     @Id
     private UUID id;
+
     private String name;
-    private Unit unit; // e.g., grams, ml, tsp
+    private Unit unit; // base unit for serving size
     private String brand;
     private Integer servingSize;
-    private BigDecimal fiberPerServing;
-    private BigDecimal proteinPerServing;
-    private BigDecimal caloriesPerServing;
-    private BigDecimal totalSugarsPerServing;
-    private BigDecimal addedSugarsPerServing;
-    private BigDecimal totalFatPerServing;
-    private BigDecimal transFatPerServing;
-    private BigDecimal saturatedFatPerServing;
-    private BigDecimal carbsPerServing;
-    private BigDecimal cholestrolPerServing;
-    private BigDecimal sodiumPerServing;
-    private BigDecimal vitDPerServing;
-    private BigDecimal calciumPerServing;
-    private BigDecimal ironPerServing;
-    private BigDecimal potassiumPerServing;
 
+    private BigDecimal fiberPerServing;
+    private Unit fiberUnit;
+
+    private BigDecimal proteinPerServing;
+    private Unit proteinUnit;
+
+    private BigDecimal caloriesPerServing;
+
+    private BigDecimal totalSugarsPerServing;
+    private Unit totalSugarsUnit;
+
+    private BigDecimal addedSugarsPerServing;
+    private Unit addedSugarsUnit;
+
+    private BigDecimal totalFatPerServing;
+    private Unit totalFatUnit;
+
+    private BigDecimal transFatPerServing;
+    private Unit transFatUnit;
+
+    private BigDecimal saturatedFatPerServing;
+    private Unit saturatedFatUnit;
+
+    private BigDecimal carbsPerServing;
+    private Unit carbsUnit;
+
+    private BigDecimal cholestrolPerServing;
+    private Unit cholestrolUnit;
+
+    private BigDecimal sodiumPerServing;
+    private Unit sodiumUnit;
+
+    private BigDecimal vitDPerServing;
+    private Unit vitDUnit;
+
+    private BigDecimal calciumPerServing;
+    private Unit calciumUnit;
+
+    private BigDecimal ironPerServing;
+    private Unit ironUnit;
+
+    private BigDecimal potassiumPerServing;
+    private Unit potassiumUnit;
 
     private Boolean isSkinSafe;
     private Boolean isGutSafe;
 
     private LocalDateTime createdAt;
 }
-

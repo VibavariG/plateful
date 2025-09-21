@@ -9,9 +9,8 @@ import java.util.UUID;
 
 import static com.foodplanner.plateful.utils.Constants.RECIPES;
 
+// @Data includes @Getter, @Setter, @ToString, @EqualsAndHashCode, @RequiredArgsConstructor
 @Data
-@Getter
-@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

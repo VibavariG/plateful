@@ -1,9 +1,11 @@
 package com.foodplanner.plateful.model.enums;
 
 public enum Unit {
-    G,
-    ML,
-    TSP,
-    TBSP,
-    OZ
+    g,
+    mg,
+    mcg,
+    ml,
+    tsp,
+    tbsp,
+    oz
 }
