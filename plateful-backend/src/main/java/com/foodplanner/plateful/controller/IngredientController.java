@@ -2,7 +2,9 @@ package com.foodplanner.plateful.controller;
 
 import com.foodplanner.plateful.model.dto.CreateIngredientRequest;
 import com.foodplanner.plateful.model.entities.Ingredient;
+import com.foodplanner.plateful.model.entities.Recipe;
 import com.foodplanner.plateful.model.repository.IngredientRepository;
+import io.r2dbc.spi.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -11,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -78,6 +81,13 @@ public class IngredientController {
                 .map(Ingredient::getName)
                 .collectList()
                 .map(names -> Map.of("data", names));
+    }
+
+    @GetMapping("/id")
+    public Mono<UUID> getIngedientIdByName(@RequestParam String name) {
+        return ingredientRepo.findByNameIgnoreCase(name)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException("Ingredient not found: " + name)))
+                .map(Ingredient::getId);
     }
 
 }
