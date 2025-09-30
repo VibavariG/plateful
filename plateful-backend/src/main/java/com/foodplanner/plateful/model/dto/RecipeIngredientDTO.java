@@ -1,6 +1,6 @@
-package com.foodplanner.plateful.dto;
+package com.foodplanner.plateful.model.dto;
 
-import com.foodplanner.plateful.model.Unit;
+import com.foodplanner.plateful.model.enums.Unit;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 

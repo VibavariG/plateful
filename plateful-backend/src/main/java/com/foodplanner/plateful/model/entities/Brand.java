@@ -1,23 +1,19 @@
-package com.foodplanner.plateful.model;
+package com.foodplanner.plateful.model.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static com.foodplanner.plateful.utils.Constants.BRANDS;
+
+@Table(BRANDS)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("recipes")
-public class Recipe {
-    @Id
+public class Brand {
     private UUID id;
     private String name;
-    private String description;
-    private LocalDateTime createdAt;
 }
-
