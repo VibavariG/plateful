@@ -359,6 +359,9 @@
   }
   input.plain-input:focus{ border-color:var(--ink); }
 
+  .field-row{ display:flex; gap:12px; margin-bottom:18px; }
+  .field-row input.plain-input{ width:100%; flex:1; }
+
   .dropzone{
     border:1.5px dashed var(--line-card); border-radius:12px;
     padding:22px 18px; display:flex; align-items:center; justify-content:center; gap:14px;
@@ -373,9 +376,13 @@
   .dropzone .dz-text{ font-size:0.85rem; color:var(--ink-soft); }
   .dropzone .dz-text b{ color:var(--ink); font-weight:700; }
 
-  .crop-editor{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .crop-editor{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .crop-frame-label{
+    font-family:var(--font-mono); font-size:0.68rem; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--ink-soft); text-align:center;
+  }
   .crop-frame{
-    width:100%; max-width:230px; aspect-ratio:1/1; border-radius:14px;
+    width:100%; max-width:260px; aspect-ratio:4/3; border-radius:14px;
     overflow:hidden; position:relative; cursor:grab; touch-action:none;
     background:var(--card-soft); border:1.5px solid var(--line-card);
   }
@@ -384,7 +391,13 @@
     width:100%; height:100%; object-fit:cover; display:block;
     -webkit-user-drag:none; user-select:none; pointer-events:none;
   }
-  .crop-controls{ width:100%; max-width:230px; }
+  .crop-secondary{ display:flex; flex-direction:column; align-items:center; gap:4px; margin-top:4px; }
+  .crop-secondary-box{
+    width:150px; aspect-ratio:16/9; border-radius:8px; overflow:hidden;
+    border:1.5px solid var(--line-card); background:var(--card-soft);
+  }
+  .crop-secondary-box img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .crop-controls{ width:100%; max-width:260px; margin-top:6px; }
   .crop-controls .hint{ text-align:center; margin:0 0 8px; }
   .crop-controls input[type="range"]{ width:100%; accent-color:var(--ink); }
   .crop-actions{ display:flex; justify-content:center; gap:16px; margin-top:8px; }
@@ -493,6 +506,11 @@
     font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em;
     color:var(--ink-soft); margin:0 0 12px; padding-bottom:8px; border-bottom:1px solid var(--line-card);
   }
+  .ing-group-title{
+    font-family:var(--font-display); font-weight:600; font-size:0.88rem;
+    color:var(--ink); margin:14px 0 8px;
+  }
+  .ing-group-title:first-child{ margin-top:0; }
   .ingredient-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
   .ingredient-list li{ display:flex; align-items:flex-start; gap:10px; font-size:0.96rem; cursor:pointer; }
   .ingredient-list .dot{
@@ -629,9 +647,24 @@
             <button type="button" class="cat-pill meal" data-cat="meal">Meals</button>
           </div>
         </div>
+        <div class="field-row">
+          <div class="field" style="flex:1; margin-bottom:0;">
+            <label>Time to make (minutes)</label>
+            <input type="number" min="1" step="1" class="plain-input" id="field-time" placeholder="e.g. 30">
+          </div>
+          <div class="field" style="flex:1; margin-bottom:0;">
+            <label>Servings</label>
+            <input type="number" min="1" step="1" class="plain-input" id="field-servings" placeholder="e.g. 4">
+          </div>
+        </div>
         <div class="field">
-          <label>Time to make (minutes)</label>
-          <input type="number" min="1" step="1" class="plain-input" id="field-time" placeholder="e.g. 30">
+          <label>Nutrition per serving (optional)</label>
+          <div class="field-row" style="margin-bottom:0;">
+            <input type="number" min="0" step="0.1" class="plain-input" id="field-protein" placeholder="Protein (g)">
+            <input type="number" min="0" step="0.1" class="plain-input" id="field-carbs" placeholder="Carbs (g)">
+            <input type="number" min="0" step="0.1" class="plain-input" id="field-fat" placeholder="Fat (g)">
+          </div>
+          <div class="hint">Approximate — actual macros vary by brand (Greek yogurt is a good example). Enter your own estimate if useful, or leave blank.</div>
         </div>
         <div class="field">
           <label>Photo (optional)</label>
@@ -642,11 +675,18 @@
             <div class="dz-text"><b>Click to upload</b> or drag a photo here</div>
           </div>
           <div class="crop-editor" id="crop-editor" style="display:none;">
+            <div class="crop-frame-label">Dashboard card preview — drag to reposition</div>
             <div class="crop-frame" id="crop-frame">
               <img class="crop-img" id="crop-img" alt="" draggable="false">
             </div>
+            <div class="crop-secondary">
+              <div class="crop-frame-label">Recipe detail view</div>
+              <div class="crop-secondary-box">
+                <img id="crop-preview-detail" alt="" draggable="false">
+              </div>
+            </div>
             <div class="crop-controls">
-              <div class="hint">Drag the photo to reposition · use the slider to zoom</div>
+              <div class="hint">Use the slider (or scroll) to zoom</div>
               <input type="range" id="crop-zoom" min="100" max="250" value="100">
             </div>
             <div class="crop-actions">
@@ -659,12 +699,12 @@
         <div class="field">
           <label>Ingredients</label>
           <textarea class="plain-area" id="field-ingredients" placeholder="2 cups flour&#10;1 tsp baking soda&#10;3 ripe bananas, mashed"></textarea>
-          <div class="hint">One ingredient per line — paste a whole list straight in.</div>
+          <div class="hint">One ingredient per line. For recipes with separate parts (e.g. a paste made ahead), start a line with ## — like "## Chilli paste" — to group everything under it.</div>
         </div>
         <div class="field">
           <label>Method</label>
           <textarea class="plain-area" id="field-steps" placeholder="Preheat oven to 180°C&#10;Mix dry ingredients in a bowl&#10;Fold in the wet ingredients"></textarea>
-          <div class="hint">One step per line, in order.</div>
+          <div class="hint">One step per line, in order. ## headings work here too, and restart the step numbering per section.</div>
         </div>
         <div class="form-actions">
           <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
@@ -809,6 +849,13 @@
     const focus = (r.imageFocus && typeof r.imageFocus.x === 'number' && typeof r.imageFocus.y === 'number')
       ? { x: r.imageFocus.x, y: r.imageFocus.y, zoom: (typeof r.imageFocus.zoom === 'number' && r.imageFocus.zoom > 0) ? r.imageFocus.zoom : 1 }
       : null;
+    const nutrition = (r.nutrition && (typeof r.nutrition.protein === 'number' || typeof r.nutrition.carbs === 'number' || typeof r.nutrition.fat === 'number'))
+      ? {
+          protein: typeof r.nutrition.protein === 'number' ? r.nutrition.protein : null,
+          carbs: typeof r.nutrition.carbs === 'number' ? r.nutrition.carbs : null,
+          fat: typeof r.nutrition.fat === 'number' ? r.nutrition.fat : null
+        }
+      : null;
     return {
       id: r.id || (Date.now().toString(36) + Math.random().toString(36).slice(2,8)),
       title: String(r.title || 'Untitled recipe'),
@@ -816,6 +863,8 @@
       image: r.image || null,
       imageFocus: focus,
       timeMinutes: (typeof r.timeMinutes === 'number' && r.timeMinutes > 0) ? r.timeMinutes : null,
+      servings: (typeof r.servings === 'number' && r.servings > 0) ? r.servings : null,
+      nutrition: nutrition,
       ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
       steps: Array.isArray(r.steps) ? r.steps : [],
       createdAt: r.createdAt || Date.now(),
@@ -845,6 +894,33 @@
       reader.onerror = function(){ reject(new Error('read failed')); };
       reader.readAsDataURL(file);
     });
+  }
+
+  // Lightweight sub-section support: a line starting with "##" begins a new
+  // named group (e.g. "## Chilli paste"), everything after it belongs to
+  // that group until the next "##" line. Recipes with no "##" lines at all
+  // get one unnamed group containing everything — so existing recipes render
+  // exactly as before, with no data migration needed.
+  function parseSections(lines){
+    const sections = [];
+    let current = { title: null, items: [] };
+    lines.forEach(function(line){
+      const m = line.match(/^##\s*(.*)$/);
+      if (m){
+        if (current.items.length || current.title) sections.push(current);
+        current = { title: m[1].trim() || 'Section', items: [] };
+      } else {
+        current.items.push(line);
+      }
+    });
+    if (current.items.length || current.title) sections.push(current);
+    return sections;
+  }
+
+  // Strips "##" heading lines out, leaving only real ingredient/step lines —
+  // used anywhere we need a flat count or list (card meta, Cook Finder).
+  function flattenLines(lines){
+    return lines.filter(function(l){ return !/^##\s*/.test(l); });
   }
 
   function placeholderIconSvg(){
@@ -997,7 +1073,7 @@
       '<div class="thumb-wrap">' + thumb + '</div>' +
       '<div class="info">' +
         '<h3>' + escapeHtml(r.title) + '</h3>' +
-        '<div class="meta">' + r.ingredients.length + ' ingredients · ' + r.steps.length + ' steps' + timeStr + cookedStr + '</div>' +
+        '<div class="meta">' + flattenLines(r.ingredients).length + ' ingredients · ' + flattenLines(r.steps).length + ' steps' + timeStr + cookedStr + '</div>' +
       '</div>' +
     '</div>';
   }
@@ -1013,6 +1089,10 @@
     form.reset();
     $('#field-title').value = '';
     $('#field-time').value = '';
+    $('#field-servings').value = '';
+    $('#field-protein').value = '';
+    $('#field-carbs').value = '';
+    $('#field-fat').value = '';
     $('#field-ingredients').value = '';
     $('#field-steps').value = '';
     hideCropEditor();
@@ -1027,6 +1107,10 @@
     selectedCat = recipe.category;
     $('#field-title').value = recipe.title;
     $('#field-time').value = (typeof recipe.timeMinutes === 'number') ? recipe.timeMinutes : '';
+    $('#field-servings').value = (typeof recipe.servings === 'number') ? recipe.servings : '';
+    $('#field-protein').value = (recipe.nutrition && typeof recipe.nutrition.protein === 'number') ? recipe.nutrition.protein : '';
+    $('#field-carbs').value = (recipe.nutrition && typeof recipe.nutrition.carbs === 'number') ? recipe.nutrition.carbs : '';
+    $('#field-fat').value = (recipe.nutrition && typeof recipe.nutrition.fat === 'number') ? recipe.nutrition.fat : '';
     $('#field-ingredients').value = recipe.ingredients.join('\n');
     $('#field-steps').value = recipe.steps.join('\n');
     if (recipe.image) showCropEditor(recipe.image, recipe.imageFocus);
@@ -1049,7 +1133,7 @@
   // Crop/reposition editor. Rather than baking one fixed crop into the
   // photo, we store a focal point (x%, y%) and a zoom multiplier — the same
   // values are re-applied via CSS object-position/transform wherever the
-  // photo is shown (square card, wide detail view), so one crop choice
+  // photo is shown (dashboard card, wide detail view), so one crop choice
   // works correctly across every shape the app displays it at.
   let pendingImageFocus = { x: 50, y: 50, zoom: 1 };
   let cropNaturalW = 0, cropNaturalH = 0;
@@ -1058,26 +1142,32 @@
   const cropFrame = $('#crop-frame');
   const cropImg = $('#crop-img');
   const cropZoom = $('#crop-zoom');
+  const cropPreviewDetail = $('#crop-preview-detail');
 
+  // frameW/frameH generalizes the "object-fit:cover" scale-to-fill formula
+  // to a non-square frame, so drag distance maps to focal-point percentage
+  // correctly for the (now 4:3) editor frame, not just a square.
   function computeCropOverflow(zoom){
     if (!cropNaturalW || !cropNaturalH) return { overflowX: 0, overflowY: 0 };
-    const frame = cropFrame.clientWidth || 230;
-    const baseScale = frame / Math.min(cropNaturalW, cropNaturalH);
+    const frameW = cropFrame.clientWidth || 260;
+    const frameH = cropFrame.clientHeight || (frameW * 3 / 4);
+    const baseScale = Math.max(frameW / cropNaturalW, frameH / cropNaturalH);
     const scale = baseScale * zoom;
     const dispW = cropNaturalW * scale, dispH = cropNaturalH * scale;
-    return { overflowX: Math.max(0, dispW - frame), overflowY: Math.max(0, dispH - frame) };
+    return { overflowX: Math.max(0, dispW - frameW), overflowY: Math.max(0, dispH - frameH) };
   }
 
   function applyCropStyle(){
     const fx = pendingImageFocus.x, fy = pendingImageFocus.y, z = pendingImageFocus.zoom;
-    cropImg.style.objectPosition = fx + '% ' + fy + '%';
-    cropImg.style.transform = 'scale(' + z + ')';
-    cropImg.style.transformOrigin = fx + '% ' + fy + '%';
+    const style = 'object-position:' + fx + '% ' + fy + '%; transform:scale(' + z + '); transform-origin:' + fx + '% ' + fy + '%;';
+    cropImg.setAttribute('style', style);
+    cropPreviewDetail.setAttribute('style', style);
   }
 
   function showCropEditor(dataUrl, focus){
     pendingImageFocus = focus ? { x: focus.x, y: focus.y, zoom: focus.zoom || 1 } : { x: 50, y: 50, zoom: 1 };
     cropImg.src = dataUrl;
+    cropPreviewDetail.src = dataUrl;
     cropZoom.value = Math.round(pendingImageFocus.zoom * 100);
     dropzone.style.display = 'none';
     $('#crop-editor').style.display = 'flex';
@@ -1092,6 +1182,7 @@
     dropzone.style.display = '';
     $('#crop-editor').style.display = 'none';
     cropImg.src = '';
+    cropPreviewDetail.src = '';
     pendingImageFocus = { x: 50, y: 50, zoom: 1 };
     cropNaturalW = 0; cropNaturalH = 0;
   }
@@ -1175,6 +1266,17 @@
     if (!title){ $('#field-title').focus(); return; }
     const timeRaw = parseInt($('#field-time').value, 10);
     const timeMinutes = (!isNaN(timeRaw) && timeRaw > 0) ? timeRaw : null;
+    const servingsRaw = parseInt($('#field-servings').value, 10);
+    const servings = (!isNaN(servingsRaw) && servingsRaw > 0) ? servingsRaw : null;
+    const proteinRaw = parseFloat($('#field-protein').value);
+    const carbsRaw = parseFloat($('#field-carbs').value);
+    const fatRaw = parseFloat($('#field-fat').value);
+    const hasNutrition = !isNaN(proteinRaw) || !isNaN(carbsRaw) || !isNaN(fatRaw);
+    const nutrition = hasNutrition ? {
+      protein: isNaN(proteinRaw) ? null : proteinRaw,
+      carbs: isNaN(carbsRaw) ? null : carbsRaw,
+      fat: isNaN(fatRaw) ? null : fatRaw
+    } : null;
     const ingredients = $('#field-ingredients').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
     const steps = $('#field-steps').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
 
@@ -1188,6 +1290,8 @@
       title: title, category: selectedCat, image: pendingImage,
       imageFocus: pendingImage ? { x: pendingImageFocus.x, y: pendingImageFocus.y, zoom: pendingImageFocus.zoom } : null,
       timeMinutes: timeMinutes,
+      servings: servings,
+      nutrition: nutrition,
       ingredients: ingredients, steps: steps,
       createdAt: existing ? existing.createdAt : Date.now(),
       lastCookedAt: existing ? (existing.lastCookedAt || null) : null
@@ -1221,6 +1325,22 @@
   const detailOverlay = $('#detail-overlay');
   let currentDetailId = null;
 
+  function sectionsHtml(lines, kind){
+    const sections = parseSections(lines);
+    return sections.map(function(sec){
+      const heading = sec.title ? '<div class="ing-group-title">' + escapeHtml(sec.title) + '</div>' : '';
+      if (!sec.items.length) return heading;
+      if (kind === 'ingredients'){
+        return heading + '<ul class="ingredient-list">' + sec.items.map(function(ing, i){
+          return '<li data-i="' + i + '"><span class="dot"></span><span>' + escapeHtml(ing) + '</span></li>';
+        }).join('') + '</ul>';
+      }
+      return heading + '<ol class="steps-list">' + sec.items.map(function(s){
+        return '<li>' + escapeHtml(s) + '</li>';
+      }).join('') + '</ol>';
+    }).join('');
+  }
+
   function openDetail(id){
     const r = recipes.find(function(x){ return x.id === id; });
     if (!r) return;
@@ -1231,13 +1351,11 @@
       : '<div class="detail-image-placeholder ' + r.category + '">' + placeholderIconSvg() + '</div>';
 
     const ingredientsHtml = r.ingredients.length
-      ? '<ul class="ingredient-list">' + r.ingredients.map(function(ing,i){
-          return '<li data-i="' + i + '"><span class="dot"></span><span>' + escapeHtml(ing) + '</span></li>';
-        }).join('') + '</ul>'
+      ? sectionsHtml(r.ingredients, 'ingredients')
       : '<div class="hint">No ingredients listed.</div>';
 
     const stepsHtml = r.steps.length
-      ? '<ol class="steps-list">' + r.steps.map(function(s){ return '<li>' + escapeHtml(s) + '</li>'; }).join('') + '</ol>'
+      ? sectionsHtml(r.steps, 'steps')
       : '<div class="hint">No method listed.</div>';
 
     const timeTag = typeof r.timeMinutes === 'number'
@@ -1248,10 +1366,22 @@
       ? '<div class="hint" style="margin:-6px 0 16px;">Last cooked ' + formatRelativeTime(r.lastCookedAt) + '</div>'
       : '';
 
+    const infoBits = [];
+    if (typeof r.servings === 'number') infoBits.push('Serves ' + r.servings);
+    if (r.nutrition){
+      if (typeof r.nutrition.protein === 'number') infoBits.push(r.nutrition.protein + 'g protein');
+      if (typeof r.nutrition.carbs === 'number') infoBits.push(r.nutrition.carbs + 'g carbs');
+      if (typeof r.nutrition.fat === 'number') infoBits.push(r.nutrition.fat + 'g fat');
+    }
+    const nutritionLine = infoBits.length
+      ? '<div class="hint" style="margin:-6px 0 16px;">' + infoBits.join(' · ') +
+        (r.nutrition ? ' <span class="tag-note">(per serving, approximate)</span>' : '') + '</div>'
+      : '';
+
     $('#detail-body-content').innerHTML =
       '<span class="detail-tag ' + r.category + '">' + CAT_LABEL[r.category] + '</span>' + timeTag +
       '<h2>' + escapeHtml(r.title) + '</h2>' +
-      cookedLine +
+      cookedLine + nutritionLine +
       '<div class="detail-section"><h4>Ingredients</h4>' + ingredientsHtml + '</div>' +
       '<div class="detail-section"><h4>Method</h4>' + stepsHtml + '</div>';
 
@@ -1320,7 +1450,7 @@
       .replace(/aubergine/g, 'eggplant')
       .replace(/courgette/g, 'zucchini')
       .replace(/coriander/g, 'cilantro')
-      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/[^a-z0-9\s-]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -1388,12 +1518,19 @@
 
   // Whole-phrase match, not substring — "salt" must appear as its own word
   // (with word boundaries) to match, so it will NOT match inside "salted".
+  // Hyphenated compounds ("ginger-garlic paste") are treated as atomic: a
+  // regex word boundary treats "-" the same as a space, so without this,
+  // "ginger" would still match inside "ginger-garlic paste" even though
+  // that's a distinct product, not plain ginger. Swapping "-" for "_" before
+  // comparing makes \b stop treating the hyphen as a break point.
   function coresMatch(a, b){
     if (!a || !b) return false;
-    if (a === b) return true;
-    const reA = new RegExp('\\b' + escapeRegExp(a) + '\\b');
-    const reB = new RegExp('\\b' + escapeRegExp(b) + '\\b');
-    return reA.test(b) || reB.test(a);
+    const a2 = a.replace(/-/g, '_');
+    const b2 = b.replace(/-/g, '_');
+    if (a2 === b2) return true;
+    const reA = new RegExp('\\b' + escapeRegExp(a2) + '\\b');
+    const reB = new RegExp('\\b' + escapeRegExp(b2) + '\\b');
+    return reA.test(b2) || reB.test(a2);
   }
 
   function coreInList(core, list){
@@ -1483,7 +1620,7 @@
   }
 
   function scoreRecipe(recipe, pantryCores, stapleCores){
-    const parsed = recipe.ingredients.map(parseIngredientLine);
+    const parsed = flattenLines(recipe.ingredients).map(parseIngredientLine);
     const required = parsed.filter(function(p){ return !p.optional; });
     const optionalList = parsed.filter(function(p){ return p.optional; });
     const requiredStatuses = required.map(function(p){ return ingredientStatus(p, pantryCores, stapleCores); });
