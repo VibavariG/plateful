@@ -561,6 +561,33 @@
   }
   .storage-banner b{ color:var(--paper); }
 
+  .scaler{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
+  .scaler button{
+    width:30px; height:30px; border-radius:50%; cursor:pointer;
+    border:1px solid var(--line); background:var(--bg-elevated); color:var(--paper);
+    font-size:1rem; line-height:1; display:flex; align-items:center; justify-content:center;
+  }
+  .scaler button:hover{ border-color:var(--paper-soft); }
+  .scaler .scaler-label{ font-family:var(--font-mono); font-size:0.85rem; color:var(--paper-soft); }
+  .notes-box{
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    font-size:0.92rem; line-height:1.6; white-space:pre-wrap;
+  }
+  .tonight-pick h3{ font-family:var(--font-display); font-weight:700; font-size:1.5rem; margin:8px 0 4px; }
+  .tonight-actions{ display:flex; gap:10px; margin-top:20px; }
+  .tonight-actions .btn-primary{ flex:1; }
+
+  .nut-row{
+    display:flex; justify-content:space-between; gap:14px;
+    padding:8px 0; border-bottom:1px solid var(--line); font-size:0.88rem;
+  }
+  .nut-row .nut-meta{ color:var(--paper-soft); text-align:right; font-size:0.8rem; }
+  .nut-row .nut-meta b{ color:var(--paper); font-size:0.88rem; }
+  .nut-totals{
+    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
+    margin:16px 0 6px; font-size:0.92rem; line-height:1.7;
+  }
+
   @media (max-width:520px){
     .header-top{ align-items:flex-start; }
     .brand h1{ font-size:1.5rem; }
@@ -612,9 +639,15 @@
       <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
       What can I cook?
     </button>
+    <button class="cook-finder-btn" id="tonight-btn" title="Can't decide? Get one pick for tonight">
+      <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>
+      Tonight
+    </button>
+    <button class="chip" id="lazy-time-chip" title="Only recipes that take 20 minutes or less">≤ 20 min</button>
+    <button class="chip" id="lazy-few-chip" title="Only recipes with 5 or fewer ingredients">≤ 5 ingredients</button>
   </div>
   <div class="storage-banner" id="storage-banner" style="display:none;">
-    <b>This preview can't save automatically.</b> Download this file (above, in the chat) and open it directly in your browser to save recipes for good — or hit the backup icon to keep a JSON copy while you work here.
+    <b>Saving is off in this browser.</b> Plateful couldn't open its recipe database here, so anything you add lasts only for this session. Use the backup icon (top right) to download a JSON copy of your recipes while you work.
   </div>
 </header>
 
@@ -660,6 +693,7 @@
         <div class="field">
           <label>Nutrition per serving (optional)</label>
           <div class="field-row" style="margin-bottom:0;">
+            <input type="number" min="0" step="1" class="plain-input" id="field-calories" placeholder="Calories (kcal)">
             <input type="number" min="0" step="0.1" class="plain-input" id="field-protein" placeholder="Protein (g)">
             <input type="number" min="0" step="0.1" class="plain-input" id="field-carbs" placeholder="Carbs (g)">
             <input type="number" min="0" step="0.1" class="plain-input" id="field-fat" placeholder="Fat (g)">
@@ -705,6 +739,11 @@
           <label>Method</label>
           <textarea class="plain-area" id="field-steps" placeholder="Preheat oven to 180°C&#10;Mix dry ingredients in a bowl&#10;Fold in the wet ingredients"></textarea>
           <div class="hint">One step per line, in order. ## headings work here too, and restart the step numbering per section.</div>
+        </div>
+        <div class="field">
+          <label>Notes (optional)</label>
+          <textarea class="plain-area" id="field-notes" placeholder="Tweaks for next time — e.g. halve the chilli, Arut likes it with extra garlic" style="min-height:56px;"></textarea>
+          <div class="hint">Your own margin notes for this recipe. Shown on the recipe page, never in the way.</div>
         </div>
         <div class="form-actions">
           <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
@@ -768,6 +807,47 @@
   </div>
 </div>
 
+<!-- Tonight picker modal -->
+<div class="overlay" id="tonight-overlay">
+  <div class="panel" style="max-width:480px;">
+    <button class="panel-close" id="tonight-close" aria-label="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
+      <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Tonight</h2>
+      <p class="finder-intro">One pick, no deliberating. Meals you haven't cooked in the last week get priority.</p>
+      <div id="tonight-content"></div>
+      <div class="tonight-actions">
+        <button type="button" class="btn-secondary" id="tonight-reroll">Pick another</button>
+        <button type="button" class="btn-primary" id="tonight-cook">Cook this</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Nutrition estimator modal -->
+<div class="overlay" id="nutrition-overlay">
+  <div class="panel" style="max-width:620px;">
+    <button class="panel-close" id="nutrition-close" aria-label="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
+      <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Nutrition estimate</h2>
+      <p class="finder-intro">Estimated from this recipe's ingredients using USDA FoodData Central (generic foods). Amounts are converted to grams where the database knows the portion. It's a close estimate, not lab values — branded products vary, which is why your typed-in nutrition always wins unless you save an estimate over it.</p>
+      <div class="field">
+        <label>USDA API key (free)</label>
+        <input type="text" class="plain-input" id="fdc-key" placeholder="Paste your free key — or leave blank to use the shared demo key">
+        <div class="hint">The shared demo key is heavily rate-limited. A free personal key takes two minutes: <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">fdc.nal.usda.gov/api-key-signup</a>. Saved on this device only.</div>
+      </div>
+      <div id="nutrition-content"></div>
+      <div class="tonight-actions">
+        <button type="button" class="btn-secondary" id="nutrition-reset-cache">Reset saved matches</button>
+        <button type="button" class="btn-primary" id="nutrition-save" disabled>Save estimate to recipe</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -783,6 +863,8 @@
   let searchTerm = '';
   let activeFilter = 'all';
   let currentSort = 'alpha';
+  let lazyTime = false;
+  let lazyFew = false;
   let editingId = null;
   let pendingImage = null; // dataURL captured by the form
   let selectedCat = 'meal';
@@ -807,11 +889,15 @@
   }
 
   // ---------- Storage ----------
-  // Claude's artifact storage (window.storage) needs a paid plan and doesn't
-  // run inside the chat preview at all, so this app saves to the browser's
-  // own localStorage instead. That only works once this file is opened
-  // directly (not inside the chat iframe) — detected below.
-  let storageMode = 'memory';
+  // Recipes (including photo dataURLs) live in IndexedDB: localStorage caps
+  // out around 5MB, which a couple of dozen photo recipes can exhaust.
+  // localStorage remains as the fallback for browsers without IndexedDB,
+  // and first run migrates whatever localStorage already holds into
+  // IndexedDB, so existing recipes carry over untouched. Tiny text settings
+  // (staples, last pantry list) stay in localStorage — they're a few bytes.
+  let storageMode = 'memory'; // 'idb' | 'local' | 'memory'
+  const IDB_NAME = 'plateful-db';
+  let idbPromise = null;
 
   function detectLocalStorage(){
     try{
@@ -824,33 +910,95 @@
     }
   }
 
-  function loadRecipes(){
-    if (storageMode !== 'local') return [];
+  function openIDB(){
+    if (idbPromise) return idbPromise;
+    idbPromise = new Promise(function(resolve){
+      if (!('indexedDB' in window)) return resolve(null);
+      let req;
+      try{ req = window.indexedDB.open(IDB_NAME, 1); }
+      catch(e){ return resolve(null); }
+      req.onupgradeneeded = function(){ req.result.createObjectStore('kv'); };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ resolve(null); };
+      req.onblocked = function(){ resolve(null); };
+    });
+    return idbPromise;
+  }
+
+  async function idbGet(key){
+    const db = await openIDB();
+    if (!db) return undefined;
+    return new Promise(function(resolve){
+      try{
+        const rq = db.transaction('kv', 'readonly').objectStore('kv').get(key);
+        rq.onsuccess = function(){ resolve(rq.result); };
+        rq.onerror = function(){ resolve(undefined); };
+      }catch(e){ resolve(undefined); }
+    });
+  }
+
+  async function idbSet(key, val){
+    const db = await openIDB();
+    if (!db) return false;
+    return new Promise(function(resolve){
+      try{
+        const tx = db.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(val, key);
+        tx.oncomplete = function(){ resolve(true); };
+        tx.onerror = function(){ resolve(false); };
+        tx.onabort = function(){ resolve(false); };
+      }catch(e){ resolve(false); }
+    });
+  }
+
+  function readLegacyRecipes(){
     try{
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
     }catch(e){
       return [];
     }
   }
 
-  function persist(){
-    if (storageMode !== 'local') return true; // kept in memory for this session only
-    try{
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
-      return true;
-    }catch(e){
-      showToast("Storage is full — try Backup, then remove a photo");
-      return false;
+  async function loadRecipes(){
+    if (storageMode === 'idb'){
+      const fromDb = await idbGet(STORAGE_KEY);
+      if (Array.isArray(fromDb)) return fromDb;
+      // First run on IndexedDB: migrate the localStorage copy over.
+      const legacy = readLegacyRecipes();
+      if (legacy.length) await idbSet(STORAGE_KEY, legacy);
+      return legacy;
     }
+    if (storageMode === 'local') return readLegacyRecipes();
+    return [];
+  }
+
+  async function persist(){
+    if (storageMode === 'idb'){
+      const ok = await idbSet(STORAGE_KEY, recipes);
+      if (!ok) showToast("Couldn't save — try Backup to keep a JSON copy");
+      return ok;
+    }
+    if (storageMode === 'local'){
+      try{
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+        return true;
+      }catch(e){
+        showToast("Storage is full — try Backup, then remove a photo");
+        return false;
+      }
+    }
+    return true; // memory mode: kept for this session only
   }
 
   function normalizeRecipe(r){
     const focus = (r.imageFocus && typeof r.imageFocus.x === 'number' && typeof r.imageFocus.y === 'number')
       ? { x: r.imageFocus.x, y: r.imageFocus.y, zoom: (typeof r.imageFocus.zoom === 'number' && r.imageFocus.zoom > 0) ? r.imageFocus.zoom : 1 }
       : null;
-    const nutrition = (r.nutrition && (typeof r.nutrition.protein === 'number' || typeof r.nutrition.carbs === 'number' || typeof r.nutrition.fat === 'number'))
+    const nutrition = (r.nutrition && (typeof r.nutrition.calories === 'number' || typeof r.nutrition.protein === 'number' || typeof r.nutrition.carbs === 'number' || typeof r.nutrition.fat === 'number'))
       ? {
+          calories: typeof r.nutrition.calories === 'number' ? r.nutrition.calories : null,
           protein: typeof r.nutrition.protein === 'number' ? r.nutrition.protein : null,
           carbs: typeof r.nutrition.carbs === 'number' ? r.nutrition.carbs : null,
           fat: typeof r.nutrition.fat === 'number' ? r.nutrition.fat : null
@@ -867,6 +1015,7 @@
       nutrition: nutrition,
       ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
       steps: Array.isArray(r.steps) ? r.steps : [],
+      notes: typeof r.notes === 'string' ? r.notes : '',
       createdAt: r.createdAt || Date.now(),
       lastCookedAt: (typeof r.lastCookedAt === 'number') ? r.lastCookedAt : null
     };
@@ -989,7 +1138,10 @@
 
   function getFiltered(){
     const filtered = recipes.filter(function(r){
-      return (activeFilter === 'all' || r.category === activeFilter) && matches(r, searchTerm);
+      if (!((activeFilter === 'all' || r.category === activeFilter) && matches(r, searchTerm))) return false;
+      if (lazyTime && !(typeof r.timeMinutes === 'number' && r.timeMinutes <= 20)) return false;
+      if (lazyFew && flattenLines(r.ingredients).length > 5) return false;
+      return true;
     });
     return sortRecipes(filtered);
   }
@@ -997,9 +1149,9 @@
   // ---------- Rendering ----------
   function render(){
     const total = recipes.length;
-    const modeSuffix = storageMode === 'local' ? ' · saved in this browser' : ' · this session only';
+    const modeSuffix = storageMode !== 'memory' ? ' · saved in this browser' : ' · this session only';
     $('#recipe-count').textContent = total === 0
-      ? (storageMode === 'local' ? 'Empty — add your first recipe' : 'Empty — add your first recipe (session only)')
+      ? (storageMode !== 'memory' ? 'Empty — add your first recipe' : 'Empty — add your first recipe (session only)')
       : total + ' recipe' + (total === 1 ? '' : 's') + modeSuffix;
 
     const filtered = getFiltered();
@@ -1090,11 +1242,13 @@
     $('#field-title').value = '';
     $('#field-time').value = '';
     $('#field-servings').value = '';
+    $('#field-calories').value = '';
     $('#field-protein').value = '';
     $('#field-carbs').value = '';
     $('#field-fat').value = '';
     $('#field-ingredients').value = '';
     $('#field-steps').value = '';
+    $('#field-notes').value = '';
     hideCropEditor();
     setSelectedCat(selectedCat);
     editOverlay.classList.add('open');
@@ -1108,11 +1262,13 @@
     $('#field-title').value = recipe.title;
     $('#field-time').value = (typeof recipe.timeMinutes === 'number') ? recipe.timeMinutes : '';
     $('#field-servings').value = (typeof recipe.servings === 'number') ? recipe.servings : '';
+    $('#field-calories').value = (recipe.nutrition && typeof recipe.nutrition.calories === 'number') ? recipe.nutrition.calories : '';
     $('#field-protein').value = (recipe.nutrition && typeof recipe.nutrition.protein === 'number') ? recipe.nutrition.protein : '';
     $('#field-carbs').value = (recipe.nutrition && typeof recipe.nutrition.carbs === 'number') ? recipe.nutrition.carbs : '';
     $('#field-fat').value = (recipe.nutrition && typeof recipe.nutrition.fat === 'number') ? recipe.nutrition.fat : '';
     $('#field-ingredients').value = recipe.ingredients.join('\n');
     $('#field-steps').value = recipe.steps.join('\n');
+    $('#field-notes').value = recipe.notes || '';
     if (recipe.image) showCropEditor(recipe.image, recipe.imageFocus);
     else hideCropEditor();
     setSelectedCat(selectedCat);
@@ -1268,15 +1424,18 @@
     const timeMinutes = (!isNaN(timeRaw) && timeRaw > 0) ? timeRaw : null;
     const servingsRaw = parseInt($('#field-servings').value, 10);
     const servings = (!isNaN(servingsRaw) && servingsRaw > 0) ? servingsRaw : null;
+    const caloriesRaw = parseFloat($('#field-calories').value);
     const proteinRaw = parseFloat($('#field-protein').value);
     const carbsRaw = parseFloat($('#field-carbs').value);
     const fatRaw = parseFloat($('#field-fat').value);
-    const hasNutrition = !isNaN(proteinRaw) || !isNaN(carbsRaw) || !isNaN(fatRaw);
+    const hasNutrition = !isNaN(caloriesRaw) || !isNaN(proteinRaw) || !isNaN(carbsRaw) || !isNaN(fatRaw);
     const nutrition = hasNutrition ? {
+      calories: isNaN(caloriesRaw) ? null : caloriesRaw,
       protein: isNaN(proteinRaw) ? null : proteinRaw,
       carbs: isNaN(carbsRaw) ? null : carbsRaw,
       fat: isNaN(fatRaw) ? null : fatRaw
     } : null;
+    const notes = $('#field-notes').value.trim();
     const ingredients = $('#field-ingredients').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
     const steps = $('#field-steps').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
 
@@ -1293,6 +1452,7 @@
       servings: servings,
       nutrition: nutrition,
       ingredients: ingredients, steps: steps,
+      notes: notes,
       createdAt: existing ? existing.createdAt : Date.now(),
       lastCookedAt: existing ? (existing.lastCookedAt || null) : null
     };
@@ -1324,15 +1484,75 @@
   // ---------- Detail modal ----------
   const detailOverlay = $('#detail-overlay');
   let currentDetailId = null;
+  let detailServings = null;
+  let wakeLock = null;
 
-  function sectionsHtml(lines, kind){
+  async function requestWakeLock(){
+    try{
+      if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen');
+    }catch(e){ /* unsupported or denied — cooking works fine without it */ }
+  }
+
+  function releaseWakeLock(){
+    try{ if (wakeLock) wakeLock.release(); }catch(e){ /* ignore */ }
+    wakeLock = null;
+  }
+
+  function bindIngredientChecks(){
+    $$('#detail-body-content .ingredient-list li').forEach(function(li){
+      li.addEventListener('click', function(){ li.classList.toggle('checked'); });
+    });
+  }
+
+  function renderDetailIngredients(r){
+    const wrap = $('#detail-ingredients');
+    if (!wrap) return;
+    const factor = (typeof r.servings === 'number' && detailServings) ? detailServings / r.servings : 1;
+    wrap.innerHTML = r.ingredients.length
+      ? sectionsHtml(r.ingredients, 'ingredients', factor)
+      : '<div class="hint">No ingredients listed.</div>';
+    const label = $('#detail-scaler-label');
+    if (label) label.textContent = detailServings ? ('Serves ' + detailServings) : '';
+    bindIngredientChecks();
+  }
+
+  // Scales the leading quantity of one ingredient line ("2 cups flour" at
+  // 1.5x -> "3 cups flour"), reusing the finder's own quantity parser so the
+  // two never disagree about what a quantity is. Lines without a leading
+  // quantity (and ## headings) pass through untouched.
+  function formatQuantity(q){
+    let whole = Math.floor(q + 1e-9);
+    let frac = q - whole;
+    const FRACS = [[0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾']];
+    let fs = '';
+    for (let i = 0; i < FRACS.length; i++){
+      if (Math.abs(frac - FRACS[i][0]) < 0.05){ fs = FRACS[i][1]; break; }
+    }
+    if (!fs && frac > 0.93){ whole += 1; frac = 0; }
+    if (!fs && frac > 0.07) return String(Math.round(q * 10) / 10);
+    if (whole && fs) return whole + fs;
+    if (fs) return fs;
+    return String(whole);
+  }
+
+  function scaleIngredientLine(line, factor){
+    if (!factor || factor === 1 || /^##/.test(line)) return line;
+    const q = extractLeadingQuantity(line);
+    if (q.quantity == null) return line;
+    const scaled = q.quantity * factor;
+    if (!(scaled > 0)) return line;
+    return formatQuantity(scaled) + ' ' + q.rest;
+  }
+
+  function sectionsHtml(lines, kind, scale){
     const sections = parseSections(lines);
     return sections.map(function(sec){
       const heading = sec.title ? '<div class="ing-group-title">' + escapeHtml(sec.title) + '</div>' : '';
       if (!sec.items.length) return heading;
       if (kind === 'ingredients'){
         return heading + '<ul class="ingredient-list">' + sec.items.map(function(ing, i){
-          return '<li data-i="' + i + '"><span class="dot"></span><span>' + escapeHtml(ing) + '</span></li>';
+          const shown = scale ? scaleIngredientLine(ing, scale) : ing;
+          return '<li data-i="' + i + '"><span class="dot"></span><span>' + escapeHtml(shown) + '</span></li>';
         }).join('') + '</ul>';
       }
       return heading + '<ol class="steps-list">' + sec.items.map(function(s){
@@ -1345,18 +1565,30 @@
     const r = recipes.find(function(x){ return x.id === id; });
     if (!r) return;
     currentDetailId = id;
+    detailServings = (typeof r.servings === 'number') ? r.servings : null;
 
     $('#detail-image-wrap').innerHTML = r.image
       ? '<img class="detail-image" src="' + r.image + '" alt=""' + imageFocusStyle(r) + '>'
       : '<div class="detail-image-placeholder ' + r.category + '">' + placeholderIconSvg() + '</div>';
 
-    const ingredientsHtml = r.ingredients.length
-      ? sectionsHtml(r.ingredients, 'ingredients')
-      : '<div class="hint">No ingredients listed.</div>';
-
     const stepsHtml = r.steps.length
       ? sectionsHtml(r.steps, 'steps')
       : '<div class="hint">No method listed.</div>';
+
+    const scalerHtml = (typeof r.servings === 'number')
+      ? '<div class="scaler"><button type="button" id="scaler-minus" aria-label="Fewer servings">−</button>' +
+        '<span class="scaler-label" id="detail-scaler-label"></span>' +
+        '<button type="button" id="scaler-plus" aria-label="More servings">+</button>' +
+        '<span class="hint" style="margin:0;">quantities adjust</span></div>'
+      : '';
+
+    const estimateHtml = r.ingredients.length
+      ? '<div style="margin:0 0 16px;"><button type="button" class="btn-secondary" id="estimate-nutrition-btn">Estimate nutrition from ingredients</button></div>'
+      : '';
+
+    const notesHtml = r.notes
+      ? '<div class="detail-section"><h4>Notes</h4><div class="notes-box">' + escapeHtml(r.notes) + '</div></div>'
+      : '';
 
     const timeTag = typeof r.timeMinutes === 'number'
       ? '<span class="detail-tag time-tag">⏱ ' + r.timeMinutes + ' min</span>'
@@ -1369,6 +1601,7 @@
     const infoBits = [];
     if (typeof r.servings === 'number') infoBits.push('Serves ' + r.servings);
     if (r.nutrition){
+      if (typeof r.nutrition.calories === 'number') infoBits.push(r.nutrition.calories + ' kcal');
       if (typeof r.nutrition.protein === 'number') infoBits.push(r.nutrition.protein + 'g protein');
       if (typeof r.nutrition.carbs === 'number') infoBits.push(r.nutrition.carbs + 'g carbs');
       if (typeof r.nutrition.fat === 'number') infoBits.push(r.nutrition.fat + 'g fat');
@@ -1381,20 +1614,34 @@
     $('#detail-body-content').innerHTML =
       '<span class="detail-tag ' + r.category + '">' + CAT_LABEL[r.category] + '</span>' + timeTag +
       '<h2>' + escapeHtml(r.title) + '</h2>' +
-      cookedLine + nutritionLine +
-      '<div class="detail-section"><h4>Ingredients</h4>' + ingredientsHtml + '</div>' +
-      '<div class="detail-section"><h4>Method</h4>' + stepsHtml + '</div>';
+      cookedLine + nutritionLine + estimateHtml +
+      '<div class="detail-section"><h4>Ingredients</h4>' + scalerHtml + '<div id="detail-ingredients"></div></div>' +
+      '<div class="detail-section"><h4>Method</h4>' + stepsHtml + '</div>' +
+      notesHtml;
 
-    $$('#detail-body-content .ingredient-list li').forEach(function(li){
-      li.addEventListener('click', function(){ li.classList.toggle('checked'); });
+    renderDetailIngredients(r);
+
+    const estimateBtn = $('#estimate-nutrition-btn');
+    if (estimateBtn) estimateBtn.addEventListener('click', function(){ openNutritionEstimator(r); });
+
+    const minusBtn = $('#scaler-minus'), plusBtn = $('#scaler-plus');
+    if (minusBtn) minusBtn.addEventListener('click', function(){
+      detailServings = Math.max(1, (detailServings || r.servings) - 1);
+      renderDetailIngredients(r);
+    });
+    if (plusBtn) plusBtn.addEventListener('click', function(){
+      detailServings = Math.min(24, (detailServings || r.servings) + 1);
+      renderDetailIngredients(r);
     });
 
     detailOverlay.classList.add('open');
+    requestWakeLock();
   }
 
   function closeDetail(){
     detailOverlay.classList.remove('open');
     currentDetailId = null;
+    releaseWakeLock();
   }
 
   $('#detail-close').addEventListener('click', closeDetail);
@@ -1435,12 +1682,15 @@
       closeDetail();
       closeEditModal();
       finderOverlay.classList.remove('open');
+      tonightOverlay.classList.remove('open');
+      nutritionOverlay.classList.remove('open');
     }
   });
 
   // ---------- Cook finder ----------
   const finderOverlay = $('#finder-overlay');
   const STAPLES_KEY = 'pantry-staples';
+  const PANTRY_KEY = 'pantry-last';
   const DEFAULT_STAPLES = 'salt, pepper, water, oil';
 
   // Normalizes common spelling differences so "yoghurt" matches "yogurt", etc.
@@ -1649,6 +1899,15 @@
     try{ window.localStorage.setItem(STAPLES_KEY, text); }catch(e){ /* best effort */ }
   }
 
+  function loadPantry(){
+    try{ return window.localStorage.getItem(PANTRY_KEY) || ''; }
+    catch(e){ return ''; }
+  }
+
+  function savePantry(text){
+    try{ window.localStorage.setItem(PANTRY_KEY, text); }catch(e){ /* best effort */ }
+  }
+
   function ingredientChecklistHtml(statuses, optional){
     return statuses.map(function(s){
       const cls = s.have ? 'have' : 'missing';
@@ -1674,6 +1933,7 @@
     const pantryText = $('#finder-pantry').value.trim();
     const staplesText = $('#finder-staples').value.trim();
     saveStaples(staplesText);
+    savePantry(pantryText);
 
     const timeRaw = parseInt($('#finder-time').value, 10);
     const maxTime = (!isNaN(timeRaw) && timeRaw > 0) ? timeRaw : null;
@@ -1739,6 +1999,7 @@
 
   $('#open-finder-btn').addEventListener('click', function(){
     $('#finder-staples').value = loadStaples();
+    $('#finder-pantry').value = loadPantry();
     finderOverlay.classList.add('open');
     renderFinderResults();
     setTimeout(function(){ $('#finder-pantry').focus(); }, 80);
@@ -1746,6 +2007,376 @@
   $('#finder-close').addEventListener('click', function(){ finderOverlay.classList.remove('open'); });
   finderOverlay.addEventListener('click', function(e){ if (e.target === finderOverlay) finderOverlay.classList.remove('open'); });
   $('#finder-run').addEventListener('click', renderFinderResults);
+
+  // ---------- Tonight picker ----------
+  const tonightOverlay = $('#tonight-overlay');
+  let tonightId = null;
+
+  // One decision-free pick: meals first, recipes not cooked in the last
+  // week preferred, never the same pick twice in a row when rerolling.
+  function pickTonight(excludeId){
+    let pool = recipes.filter(function(r){ return r.category === 'meal'; });
+    if (!pool.length) pool = recipes.slice();
+    if (!pool.length) return null;
+    const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+    let fresh = pool.filter(function(r){ return !r.lastCookedAt || r.lastCookedAt < weekAgo; });
+    if (!fresh.length) fresh = pool;
+    if (excludeId){
+      const others = fresh.filter(function(r){ return r.id !== excludeId; });
+      if (others.length) fresh = others;
+    }
+    return fresh[Math.floor(Math.random() * fresh.length)];
+  }
+
+  function showTonight(){
+    const r = pickTonight(tonightId);
+    if (!r){
+      showToast('Add a recipe first');
+      return;
+    }
+    tonightId = r.id;
+    const meta = [];
+    meta.push(CAT_LABEL[r.category]);
+    if (typeof r.timeMinutes === 'number') meta.push(r.timeMinutes + ' min');
+    meta.push(flattenLines(r.ingredients).length + ' ingredients');
+    if (r.lastCookedAt) meta.push('last cooked ' + formatRelativeTime(r.lastCookedAt));
+    $('#tonight-content').innerHTML =
+      '<div class="tonight-pick"><span class="detail-tag ' + r.category + '">' + CAT_LABEL[r.category] + '</span>' +
+      '<h3>' + escapeHtml(r.title) + '</h3>' +
+      '<div class="hint" style="margin:0;">' + meta.join(' · ') + '</div></div>';
+    tonightOverlay.classList.add('open');
+  }
+
+  $('#tonight-btn').addEventListener('click', function(){ tonightId = null; showTonight(); });
+  $('#tonight-reroll').addEventListener('click', showTonight);
+  $('#tonight-cook').addEventListener('click', function(){
+    tonightOverlay.classList.remove('open');
+    if (tonightId) openDetail(tonightId);
+  });
+  $('#tonight-close').addEventListener('click', function(){ tonightOverlay.classList.remove('open'); });
+  tonightOverlay.addEventListener('click', function(e){ if (e.target === tonightOverlay) tonightOverlay.classList.remove('open'); });
+
+  // ---------- Lazy filters ----------
+  $('#lazy-time-chip').addEventListener('click', function(){
+    lazyTime = !lazyTime;
+    this.classList.toggle('active', lazyTime);
+    render();
+  });
+  $('#lazy-few-chip').addEventListener('click', function(){
+    lazyFew = !lazyFew;
+    this.classList.toggle('active', lazyFew);
+    render();
+  });
+
+  // ---------- Nutrition estimator ----------
+  // Parses each ingredient line with the finder's parser, converts the
+  // amount to grams (weight units directly; volume/piece units via the
+  // gram weights USDA publishes for that food's portions), looks the food
+  // up in FoodData Central once, and caches the match — so an ingredient
+  // is only ever fetched once, and repeat estimates work offline.
+  const nutritionOverlay = $('#nutrition-overlay');
+  const FDC_KEY_STORAGE = 'fdc-api-key';
+  const NUTRITION_CACHE_KEY = 'nutrition-cache';
+  let nutritionCache = null;
+  let currentEstimate = null;
+
+  function getFdcKey(){
+    try{ return window.localStorage.getItem(FDC_KEY_STORAGE) || 'DEMO_KEY'; }
+    catch(e){ return 'DEMO_KEY'; }
+  }
+
+  function setFdcKey(k){
+    try{
+      if (k) window.localStorage.setItem(FDC_KEY_STORAGE, k);
+      else window.localStorage.removeItem(FDC_KEY_STORAGE);
+    }catch(e){ /* best effort */ }
+  }
+
+  async function loadNutritionCache(){
+    if (nutritionCache) return nutritionCache;
+    if (storageMode === 'idb'){
+      const v = await idbGet(NUTRITION_CACHE_KEY);
+      nutritionCache = (v && typeof v === 'object') ? v : {};
+    } else {
+      try{ nutritionCache = JSON.parse(window.localStorage.getItem(NUTRITION_CACHE_KEY) || '{}'); }
+      catch(e){ nutritionCache = {}; }
+    }
+    return nutritionCache;
+  }
+
+  async function saveNutritionCache(){
+    if (!nutritionCache) return;
+    if (storageMode === 'idb'){ await idbSet(NUTRITION_CACHE_KEY, nutritionCache); return; }
+    try{ window.localStorage.setItem(NUTRITION_CACHE_KEY, JSON.stringify(nutritionCache)); }catch(e){ /* best effort */ }
+  }
+
+  // gram weights for the units the parser can produce
+  const WEIGHT_GRAMS = { gram: 1, g: 1, kilogram: 1000, kg: 1000, ounce: 28.35, oz: 28.35, pound: 453.59, lb: 453.59 };
+  const VOLUME_TSP = { teaspoon: 1, tsp: 1, tablespoon: 3, tbsp: 3, cup: 48, pint: 96, quart: 192 };
+  const UNIT_ALIASES = { tbsp: 'tablespoon', tsp: 'teaspoon', oz: 'ounce', lb: 'pound', g: 'gram', kg: 'kilogram' };
+
+  function pickNutrient(list, ids, numbers){
+    for (let i = 0; i < list.length; i++){
+      const n = list[i];
+      const nut = n.nutrient || n;
+      const id = (nut.id != null) ? nut.id : n.nutrientId;
+      const num = nut.number || n.nutrientNumber;
+      const val = (n.amount != null) ? n.amount : n.value;
+      if (val == null) continue;
+      if (ids.indexOf(id) > -1 || numbers.indexOf(String(num)) > -1) return val;
+    }
+    return null;
+  }
+
+  function per100gFrom(food){
+    const list = food.foodNutrients || [];
+    const out = {
+      calories: pickNutrient(list, [1008], ['208']),
+      protein: pickNutrient(list, [1003], ['203']),
+      carbs: pickNutrient(list, [1005], ['205']),
+      fat: pickNutrient(list, [1004], ['204'])
+    };
+    if (out.calories == null || out.protein == null || out.carbs == null || out.fat == null) return null;
+    return out;
+  }
+
+  function extractPortions(food){
+    return (food.foodPortions || []).map(function(p){
+      const unitRaw = (p.measureUnit && (p.measureUnit.name || p.measureUnit.abbreviation)) || '';
+      const unit = unitRaw.toLowerCase();
+      return {
+        unit: unit === 'undetermined' ? '' : unit,
+        grams: (typeof p.gramWeight === 'number') ? p.gramWeight / (p.amount || 1) : null,
+        desc: (p.portionDescription || '').toLowerCase()
+      };
+    }).filter(function(p){ return p.grams && p.grams > 0; });
+  }
+
+  function slimFood(food){
+    const per100g = per100gFrom(food);
+    if (!per100g) return null;
+    return {
+      fdcId: food.fdcId,
+      description: food.description || 'USDA food',
+      per100g: per100g,
+      portions: extractPortions(food)
+    };
+  }
+
+  async function fetchFoodFor(core){
+    const key = getFdcKey();
+    const searchUrl = 'https://api.nal.usda.gov/fdc/v1/foods/search?api_key=' + encodeURIComponent(key) +
+      '&query=' + encodeURIComponent(core) + '&pageSize=5&dataType=' + encodeURIComponent('Foundation,SR Legacy');
+    const res = await fetch(searchUrl);
+    if (!res.ok) throw new Error('USDA search failed (' + res.status + ')');
+    const data = await res.json();
+    const foods = (data && data.foods) || [];
+    if (!foods.length) return null;
+    const words = core.split(' ').filter(Boolean);
+    let best = null;
+    for (let i = 0; i < foods.length; i++){
+      const slim = slimFood(foods[i]);
+      if (!slim) continue;
+      if (!best) best = slim;
+      const desc = (foods[i].description || '').toLowerCase();
+      if (words.every(function(w){ return desc.indexOf(w) > -1; })){ best = slim; break; }
+    }
+    if (!best) return null;
+    // Portions live on the full food record — one extra call, cached forever.
+    try{
+      const dres = await fetch('https://api.nal.usda.gov/fdc/v1/food/' + best.fdcId + '?api_key=' + encodeURIComponent(key));
+      if (dres.ok){
+        const detail = await dres.json();
+        best.portions = extractPortions(detail);
+        const detailPer100g = per100gFrom(detail);
+        if (detailPer100g) best.per100g = detailPer100g;
+      }
+    }catch(e){ /* portions are a bonus, not a requirement */ }
+    return best;
+  }
+
+  function gramsFor(parsed, food){
+    const q = parsed.quantity;
+    if (q == null) return null;
+    const unit = parsed.unit;
+    const portions = food.portions || [];
+    if (!unit){
+      // Bare count ("2 eggs"): a portion whose description names the food.
+      const coreWords = (parsed.ingredient || '').split(' ');
+      const lastWord = coreWords[coreWords.length - 1];
+      const p = portions.find(function(pp){ return pp.desc && lastWord && pp.desc.indexOf(lastWord) > -1; });
+      return p ? p.grams * q : null;
+    }
+    if (WEIGHT_GRAMS[unit]) return WEIGHT_GRAMS[unit] * q;
+    const alias = UNIT_ALIASES[unit] || unit;
+    let p = portions.find(function(pp){ return pp.unit === unit || pp.unit === alias; });
+    if (p) return p.grams * q;
+    if (VOLUME_TSP[unit]){
+      // Convert through any volume portion the food does publish (e.g. cup).
+      const vp = portions.find(function(pp){ return VOLUME_TSP[pp.unit]; });
+      if (vp) return vp.grams * (VOLUME_TSP[unit] / VOLUME_TSP[vp.unit]) * q;
+      return null;
+    }
+    // Piece-like units (clove, slice, can…): match on the portion description.
+    p = portions.find(function(pp){ return pp.desc && pp.desc.indexOf(unit) > -1; });
+    return p ? p.grams * q : null;
+  }
+
+  function finishResolve(parsed, food, core){
+    const grams = gramsFor(parsed, food);
+    if (grams == null) return { status: 'no-amount', food: food, core: core };
+    const f = grams / 100;
+    return {
+      status: 'ok', food: food, core: core, grams: grams,
+      calories: food.per100g.calories * f,
+      protein: food.per100g.protein * f,
+      carbs: food.per100g.carbs * f,
+      fat: food.per100g.fat * f
+    };
+  }
+
+  async function resolveIngredient(parsed){
+    const cache = await loadNutritionCache();
+    for (let i = 0; i < parsed.alternatives.length; i++){
+      const core = parsed.alternatives[i];
+      if (Object.prototype.hasOwnProperty.call(cache, core)){
+        const cached = cache[core];
+        if (cached) return finishResolve(parsed, cached, core);
+      }
+    }
+    const core = parsed.alternatives[0];
+    if (!core) return { status: 'unparsed' };
+    const food = await fetchFoodFor(core);
+    cache[core] = food;
+    await saveNutritionCache();
+    if (!food) return { status: 'not-found', core: core };
+    return finishResolve(parsed, food, core);
+  }
+
+  function round1(x){ return Math.round(x * 10) / 10; }
+
+  function renderNutritionEstimate(recipe){
+    const content = $('#nutrition-content');
+    const est = currentEstimate;
+    if (!est) return;
+
+    const rowsHtml = est.rows.map(function(row){
+      let meta;
+      if (row.status === 'ok'){
+        meta = '<b>' + Math.round(row.calories) + ' kcal</b><br>≈' + Math.round(row.grams) + ' g · ' + escapeHtml(row.food.description);
+      } else if (row.status === 'not-found'){
+        meta = 'not in USDA — skipped';
+      } else if (row.status === 'no-amount'){
+        meta = 'amount not convertible — skipped<br>' + escapeHtml(row.food.description);
+      } else if (row.status === 'optional'){
+        meta = 'optional — not counted';
+      } else if (row.status === 'error'){
+        meta = 'lookup failed — skipped';
+      } else {
+        meta = 'could not parse — skipped';
+      }
+      return '<div class="nut-row"><span>' + escapeHtml(row.raw) + '</span><span class="nut-meta">' + meta + '</span></div>';
+    }).join('');
+
+    const t = est.totals;
+    let totalsHtml = '<div class="nut-totals"><b>Whole recipe:</b> ' + Math.round(t.calories) + ' kcal · ' +
+      round1(t.protein) + 'g protein · ' + round1(t.carbs) + 'g carbs · ' + round1(t.fat) + 'g fat';
+    if (est.perServing){
+      const p = est.perServing;
+      totalsHtml += '<br><b>Per serving (' + recipe.servings + '):</b> ' + Math.round(p.calories) + ' kcal · ' +
+        round1(p.protein) + 'g protein · ' + round1(p.carbs) + 'g carbs · ' + round1(p.fat) + 'g fat';
+    } else {
+      totalsHtml += '<br><span class="hint" style="margin:0;">Set servings on this recipe to get per-serving values and save the estimate.</span>';
+    }
+    totalsHtml += '</div>';
+
+    const coverage = 'Based on ' + est.counted + ' of ' + est.total + ' ingredient lines.';
+    const errorNote = est.rows.some(function(r){ return r.status === 'error'; })
+      ? '<div class="hint">A lookup failed — the shared demo key is rate-limited. Add your free key above and reopen this panel to retry.</div>'
+      : '';
+
+    content.innerHTML = rowsHtml + totalsHtml +
+      '<div class="hint">' + coverage + ' Estimates — actual values vary by brand and prep.</div>' + errorNote;
+
+    const saveBtn = $('#nutrition-save');
+    saveBtn.disabled = !(est.perServing && est.counted > 0);
+  }
+
+  async function openNutritionEstimator(recipe){
+    currentEstimate = null;
+    nutritionOverlay.classList.add('open');
+    $('#fdc-key').value = getFdcKey() === 'DEMO_KEY' ? '' : getFdcKey();
+    const content = $('#nutrition-content');
+    content.innerHTML = '<div class="hint">Looking up ingredients…</div>';
+    $('#nutrition-save').disabled = true;
+
+    const lines = flattenLines(recipe.ingredients);
+    const rows = [];
+    for (let i = 0; i < lines.length; i++){
+      const line = lines[i];
+      const parsed = parseIngredientLine(line);
+      if (!parsed.alternatives.length){ rows.push({ raw: line, status: 'unparsed' }); continue; }
+      if (parsed.optional){ rows.push({ raw: line, status: 'optional' }); continue; }
+      try{
+        const resolved = await resolveIngredient(parsed);
+        rows.push(Object.assign({ raw: line }, resolved));
+      }catch(e){
+        rows.push({ raw: line, status: 'error' });
+      }
+    }
+
+    const totals = { calories: 0, protein: 0, carbs: 0, fat: 0 };
+    let counted = 0;
+    rows.forEach(function(row){
+      if (row.status !== 'ok') return;
+      counted++;
+      totals.calories += row.calories;
+      totals.protein += row.protein;
+      totals.carbs += row.carbs;
+      totals.fat += row.fat;
+    });
+
+    const perServing = (typeof recipe.servings === 'number' && recipe.servings > 0)
+      ? {
+          calories: totals.calories / recipe.servings,
+          protein: totals.protein / recipe.servings,
+          carbs: totals.carbs / recipe.servings,
+          fat: totals.fat / recipe.servings
+        }
+      : null;
+
+    currentEstimate = { recipeId: recipe.id, rows: rows, totals: totals, perServing: perServing, counted: counted, total: rows.length };
+    renderNutritionEstimate(recipe);
+  }
+
+  $('#nutrition-close').addEventListener('click', function(){ nutritionOverlay.classList.remove('open'); });
+  nutritionOverlay.addEventListener('click', function(e){ if (e.target === nutritionOverlay) nutritionOverlay.classList.remove('open'); });
+  $('#fdc-key').addEventListener('change', function(){ setFdcKey(this.value.trim()); });
+  $('#nutrition-reset-cache').addEventListener('click', async function(){
+    nutritionCache = {};
+    await saveNutritionCache();
+    showToast('Saved ingredient matches cleared');
+  });
+  $('#nutrition-save').addEventListener('click', async function(){
+    if (!currentEstimate || !currentEstimate.perServing) return;
+    const r = recipes.find(function(x){ return x.id === currentEstimate.recipeId; });
+    if (!r) return;
+    const p = currentEstimate.perServing;
+    r.nutrition = {
+      calories: Math.round(p.calories),
+      protein: round1(p.protein),
+      carbs: round1(p.carbs),
+      fat: round1(p.fat)
+    };
+    const ok = await persist();
+    if (ok){
+      nutritionOverlay.classList.remove('open');
+      closeDetail();
+      openDetail(r.id);
+      render();
+      showToast('Nutrition estimate saved');
+    }
+  });
 
   // ---------- Search & filters ----------
   $('#search-input').addEventListener('input', function(e){
@@ -1790,7 +2421,7 @@
     const file = this.files && this.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = function(e){
+    reader.onload = async function(e){
       try{
         const data = JSON.parse(e.target.result);
         if (!Array.isArray(data)) throw new Error('bad format');
@@ -1802,7 +2433,7 @@
           if (idx > -1){ recipes[idx] = r; updated++; }
           else { recipes.push(r); added++; }
         });
-        persist();
+        await persist();
         render();
         showToast('Restored: ' + added + ' added, ' + updated + ' updated');
       }catch(err){
@@ -1814,10 +2445,13 @@
   });
 
   // ---------- Init ----------
-  (function init(){
-    storageMode = detectLocalStorage() ? 'local' : 'memory';
-    $('#storage-banner').style.display = storageMode === 'local' ? 'none' : 'block';
-    recipes = loadRecipes();
+  (async function init(){
+    const db = await openIDB();
+    if (db) storageMode = 'idb';
+    else if (detectLocalStorage()) storageMode = 'local';
+    else storageMode = 'memory';
+    $('#storage-banner').style.display = storageMode === 'memory' ? 'block' : 'none';
+    recipes = (await loadRecipes()).map(normalizeRecipe);
     render();
   })();
 })();
