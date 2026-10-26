@@ -9,29 +9,29 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Karla:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#221e1a;
-    --bg-elevated:#2a2521;
-    --card:#fbf6ea;
-    --card-soft:#f1e8d6;
-    --ink:#2a241c;
-    --ink-soft:#79705f;
-    --paper:#f3eee2;
-    --paper-soft:#b6ab96;
-    --line:rgba(243,238,226,0.12);
-    --line-card:rgba(42,36,28,0.12);
-    --shadow:rgba(10,8,6,0.4);
+    --bg:#F6F8F3;
+    --bg-elevated:#FFFFFF;
+    --card:#FFFFFF;
+    --card-soft:#E9F0E2;
+    --ink:#22301F;
+    --ink-soft:#6B7A62;
+    --paper:#22301F;
+    --paper-soft:#6B7A62;
+    --line:rgba(34,48,31,0.14);
+    --line-card:rgba(34,48,31,0.14);
+    --shadow:rgba(34,48,31,0.15);
 
-    --dessert:#b94a6c;
-    --dessert-soft:#ecc2cd;
-    --dessert-deep:#853450;
+    --dessert:#A84A6B;
+    --dessert-soft:#F3DCE3;
+    --dessert-deep:#7C3350;
 
-    --snack:#d5a13a;
-    --snack-soft:#f1dca4;
-    --snack-deep:#96701e;
+    --snack:#E8C468;
+    --snack-soft:#FBF3D3;
+    --snack-deep:#8A6D1F;
 
-    --meal:#5c7a52;
-    --meal-soft:#c7d6bc;
-    --meal-deep:#3d5535;
+    --meal:#5C7A52;
+    --meal-soft:#DDE6D3;
+    --meal-deep:#3D5535;
 
     --font-display:'Fraunces', serif;
     --font-body:'Karla', sans-serif;
@@ -43,8 +43,8 @@
   body{
     background:var(--bg);
     background-image:
-      radial-gradient(circle at 15% 8%, rgba(255,255,255,0.035), transparent 40%),
-      radial-gradient(circle at 85% 90%, rgba(255,255,255,0.03), transparent 45%);
+      radial-gradient(circle at 15% 8%, rgba(92,122,82,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(232,196,104,0.08), transparent 45%);
     color:var(--paper);
     font-family:var(--font-body);
     min-height:100vh;
@@ -64,12 +64,12 @@
   header{
     position:sticky; top:0; z-index:20;
     backdrop-filter:blur(10px);
-    background:rgba(34,30,26,0.86);
+    background:rgba(246,248,243,0.92);
     border-bottom:1px solid var(--line);
     padding:18px 24px 16px;
   }
   .header-top{
-    max-width:1080px; margin:0 auto;
+    width:92%; max-width:1440px; margin:0 auto;
     display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap;
   }
   .brand h1{
@@ -88,8 +88,8 @@
     margin:4px 0 0;
   }
   .new-recipe-btn{
-    background:var(--paper);
-    color:var(--ink);
+    background:var(--meal);
+    color:#fff;
     border:none;
     border-radius:999px;
     padding:11px 20px 11px 16px;
@@ -103,7 +103,7 @@
   .new-recipe-btn:active{ transform:translateY(0); }
 
   .controls-row{
-    max-width:1080px; margin:16px auto 0;
+    width:92%; max-width:1440px; margin:16px auto 0;
     display:flex; gap:10px; align-items:center; flex-wrap:wrap;
   }
   .search-wrap{
@@ -142,7 +142,7 @@
     transition:all 0.15s ease;
   }
   .chip:hover{ border-color:var(--paper-soft); color:var(--paper); }
-  .chip.active{ background:var(--paper); color:var(--ink); border-color:var(--paper); }
+  .chip.active{ background:var(--meal); color:#fff; border-color:var(--meal); }
 
   .sort-select{
     appearance:none; -webkit-appearance:none; -moz-appearance:none;
@@ -158,7 +158,7 @@
     outline:none;
     cursor:pointer;
     transition:border-color 0.15s ease;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b6ab96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B7A62' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat:no-repeat;
     background-position:right 11px center;
     background-size:14px;
@@ -167,7 +167,7 @@
   .sort-select option{ background:var(--bg-elevated); color:var(--paper); }
 
   /* ---------- Main ---------- */
-  main{ max-width:1080px; margin:0 auto; padding:28px 24px 120px; }
+  main{ width:92%; max-width:1440px; margin:0 auto; padding:22px 28px 120px; }
 
   .cat-section{ margin-bottom:38px; opacity:0; animation:rise 0.5s ease forwards; }
   .cat-section:nth-of-type(1){ animation-delay:0.02s; }
@@ -214,7 +214,7 @@
     transition:transform 0.15s ease, box-shadow 0.15s ease;
   }
   .recipe-card:hover{ transform:translateY(-3px) rotate(-0.3deg); box-shadow:0 10px 22px var(--shadow); }
-  .recipe-card:focus-visible{ outline:2px solid var(--paper); outline-offset:2px; }
+  .recipe-card:focus-visible{ outline:2px solid var(--meal); outline-offset:2px; }
 
   .recipe-card .thumb-wrap{
     width:100%; aspect-ratio:4/3; overflow:hidden; background:var(--card-soft);
@@ -258,7 +258,7 @@
     padding:20px 10px;
     transition:all 0.15s ease;
   }
-  .add-card:hover{ border-color:var(--paper); color:var(--paper); background:rgba(255,255,255,0.03); }
+  .add-card:hover{ border-color:var(--meal); color:var(--ink); background:rgba(92,122,82,0.06); }
   .add-card span{ font-family:var(--font-mono); font-size:0.76rem; text-align:center; }
 
   .empty-state{
@@ -274,7 +274,7 @@
   .fab{
     position:fixed; right:20px; bottom:22px; z-index:25;
     width:56px; height:56px; border-radius:50%;
-    background:var(--paper); color:var(--ink); border:none;
+    background:var(--meal); color:#fff; border:none;
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 6px 18px rgba(0,0,0,0.4);
   }
@@ -308,8 +308,8 @@
   }
   .panel-holes span{
     width:9px; height:9px; border-radius:50%;
-    background:var(--bg);
-    box-shadow:inset 0 1px 2px rgba(0,0,0,0.5);
+    background:var(--meal-soft);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,0.2);
   }
 
   .panel-stripe{ position:absolute; left:0; top:0; bottom:0; width:6px; }
@@ -421,7 +421,7 @@
     background:var(--ink); color:var(--card); border:none; border-radius:999px;
     padding:12px 24px; font-weight:700; font-size:0.94rem; flex:1;
   }
-  .btn-primary:hover{ background:#3a3226; }
+  .btn-primary:hover{ background:#3D5535; }
   .btn-secondary{
     background:transparent; color:var(--ink-soft); border:1.5px solid var(--line-card);
     border-radius:999px; padding:12px 20px; font-weight:600; font-size:0.94rem;
@@ -493,7 +493,7 @@
 
   .detail-body h2{ font-family:var(--font-display); font-size:1.7rem; font-weight:700; margin:0 0 18px; line-height:1.15; }
 
-  .detail-actions{ position:absolute; top:12px; right:52px; display:flex; gap:6px; z-index:2; }
+  .detail-actions{ display:flex; gap:6px; }
   .icon-btn{
     width:32px; height:32px; border-radius:50%; border:none; background:rgba(42,36,28,0.06);
     color:var(--ink); display:flex; align-items:center; justify-content:center;
@@ -532,7 +532,7 @@
   /* Toast */
   .toast{
     position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
-    background:var(--paper); color:var(--ink); padding:11px 20px; border-radius:999px;
+    background:var(--ink); color:#fff; padding:11px 20px; border-radius:999px;
     font-size:0.88rem; font-weight:600; box-shadow:0 8px 24px rgba(0,0,0,0.35);
     opacity:0; pointer-events:none; transition:all 0.22s ease; z-index:90; white-space:nowrap;
   }
@@ -550,21 +550,21 @@
   .icon-btn-lg:hover{ border-color:var(--paper-soft); transform:translateY(-1px); }
 
   .storage-banner{
-    max-width:1080px; margin:14px auto 0;
-    background:rgba(213,161,58,0.14);
-    border:1px solid rgba(213,161,58,0.4);
-    color:var(--snack-soft);
+    width:92%; max-width:1440px; margin:14px auto 0;
+    background:rgba(232,196,104,0.25);
+    border:1px solid rgba(232,196,104,0.6);
+    color:var(--ink);
     padding:11px 16px;
     border-radius:10px;
     font-size:0.83rem;
     line-height:1.55;
   }
-  .storage-banner b{ color:var(--paper); }
+  .storage-banner b{ color:var(--ink); }
 
   .scaler{ display:flex; align-items:center; gap:10px; margin:0 0 14px; }
   .scaler button{
     width:30px; height:30px; border-radius:50%; cursor:pointer;
-    border:1px solid var(--line); background:var(--bg-elevated); color:var(--paper);
+    border:1px solid var(--line-card); background:#fff; color:var(--ink);
     font-size:1rem; line-height:1; display:flex; align-items:center; justify-content:center;
   }
   .scaler button:hover{ border-color:var(--paper-soft); }
@@ -579,13 +579,47 @@
 
   .nut-row{
     display:flex; justify-content:space-between; gap:14px;
-    padding:8px 0; border-bottom:1px solid var(--line); font-size:0.88rem;
+    padding:8px 0; border-bottom:1px solid var(--line-card); font-size:0.88rem; color:var(--ink);
   }
-  .nut-row .nut-meta{ color:var(--paper-soft); text-align:right; font-size:0.8rem; }
-  .nut-row .nut-meta b{ color:var(--paper); font-size:0.88rem; }
+  .nut-row .nut-meta{ color:var(--ink-soft); text-align:right; font-size:0.8rem; }
+  .nut-row .nut-meta b{ color:var(--ink); font-size:0.88rem; }
   .nut-totals{
-    border:1px solid var(--line); border-radius:10px; padding:12px 14px;
-    margin:16px 0 6px; font-size:0.92rem; line-height:1.7;
+    border:1px solid var(--line-card); border-radius:10px; padding:12px 14px;
+    margin:16px 0 6px; font-size:0.92rem; line-height:1.7; color:var(--ink); background:var(--card-soft);
+  }
+
+
+  /* ---------- Full-page recipe view (Layout A, batch 3) ---------- */
+  .detail-page{ animation:rise 0.3s ease forwards; }
+  .detail-back{
+    background:none; border:none; color:var(--meal); font-weight:700; font-size:0.95rem;
+    padding:0; margin:4px 0 16px; cursor:pointer; display:inline-block;
+  }
+  .detail-back:hover{ text-decoration:underline; }
+  .detail-actions-page{ display:flex; gap:8px; float:right; }
+  .detail-title{ font-family:var(--font-display); font-size:2.4rem; font-weight:700; margin:0 0 12px; line-height:1.1; color:var(--ink); }
+  .detail-meta{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .detail-meta span{ background:#fff; border:1px solid var(--line-card); border-radius:999px; padding:7px 13px; font-size:0.83rem; font-weight:600; color:var(--ink); }
+  .detail-meta span.cat{ background:var(--meal); color:#fff; border-color:var(--meal); }
+  .detail-hero{ aspect-ratio:16/9; overflow:hidden; border-radius:16px; margin-bottom:22px; background:var(--card-soft); }
+  .detail-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .detail-grid{ display:grid; grid-template-columns:380px 1fr; gap:28px; align-items:start; }
+  .detail-card{ background:#fff; border:1px solid #DDE6D3; border-radius:16px; padding:22px; }
+  .detail-card h4{
+    font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--ink-soft); margin:0 0 12px; padding-bottom:8px; border-bottom:1px solid var(--line-card);
+  }
+  .detail-nutbar{
+    margin-top:20px; background:#fff; border:1px solid #DDE6D3; border-radius:16px;
+    padding:18px 22px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;
+  }
+  .detail-nutbar .nut-text{ font-size:0.95rem; line-height:1.6; color:var(--ink); }
+  .detail-nutbar .nut-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .detail-nutbar .btn-primary{ flex:none; }
+  @media (max-width:720px){
+    .detail-grid{ grid-template-columns:1fr; }
+    .detail-title{ font-size:1.9rem; }
+    .detail-hero{ aspect-ratio:4/3; }
   }
 
   @media (max-width:520px){
@@ -754,30 +788,6 @@
   </div>
 </div>
 
-<!-- Detail modal -->
-<div class="overlay" id="detail-overlay">
-  <div class="panel" style="max-width:600px;">
-    <button class="panel-close" id="detail-close" aria-label="Close">
-      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
-    </button>
-    <div class="detail-actions">
-      <button class="icon-btn" id="detail-cooked" aria-label="Mark as cooked" title="Mark as cooked">
-        <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M20 6L9 17l-5-5"/></svg>
-      </button>
-      <button class="icon-btn" id="detail-edit" aria-label="Edit recipe">
-        <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-      </button>
-      <button class="icon-btn danger" id="detail-delete" aria-label="Delete recipe">
-        <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>
-      </button>
-    </div>
-    <div class="panel-scroll" style="padding:0; max-height:90vh;">
-      <div id="detail-image-wrap"></div>
-      <div class="detail-body" id="detail-body-content"></div>
-    </div>
-  </div>
-</div>
-
 <!-- Cook finder modal -->
 <div class="overlay" id="finder-overlay">
   <div class="panel" style="max-width:620px;">
@@ -833,7 +843,7 @@
     </button>
     <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
       <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Nutrition estimate</h2>
-      <p class="finder-intro">Estimated from this recipe's ingredients using USDA FoodData Central (generic foods). Amounts are converted to grams where the database knows the portion. It's a close estimate, not lab values — branded products vary, which is why your typed-in nutrition always wins unless you save an estimate over it.</p>
+      <p class="finder-intro">Estimated from this recipe's ingredients using USDA FoodData Central (generic foods). Indian spices, ghee, ginger-garlic paste and plain Greek yoghurt use a built-in table with correct gram weights, so they are never matched to the wrong food. Other amounts are converted to grams where the database knows the portion, or with a standard tablespoon/teaspoon weight where it doesn't. It's a close estimate, not lab values — branded products vary, which is why your typed-in nutrition always wins unless you save an estimate over it.</p>
       <div class="field">
         <label>USDA API key (free)</label>
         <input type="text" class="plain-input" id="fdc-key" placeholder="Paste your free key — or leave blank to use the shared demo key">
@@ -1272,7 +1282,6 @@
     if (recipe.image) showCropEditor(recipe.image, recipe.imageFocus);
     else hideCropEditor();
     setSelectedCat(selectedCat);
-    detailOverlay.classList.remove('open');
     editOverlay.classList.add('open');
   }
 
@@ -1482,7 +1491,6 @@
   $('#fab-add').addEventListener('click', function(){ openAddModal(activeFilter !== 'all' ? activeFilter : 'meal'); });
 
   // ---------- Detail modal ----------
-  const detailOverlay = $('#detail-overlay');
   let currentDetailId = null;
   let detailServings = null;
   let wakeLock = null;
@@ -1499,7 +1507,7 @@
   }
 
   function bindIngredientChecks(){
-    $$('#detail-body-content .ingredient-list li').forEach(function(li){
+    $$('#main-content .ingredient-list li').forEach(function(li){
       li.addEventListener('click', function(){ li.classList.toggle('checked'); });
     });
   }
@@ -1567,7 +1575,7 @@
     currentDetailId = id;
     detailServings = (typeof r.servings === 'number') ? r.servings : null;
 
-    $('#detail-image-wrap').innerHTML = r.image
+    const heroHtml = r.image
       ? '<img class="detail-image" src="' + r.image + '" alt=""' + imageFocusStyle(r) + '>'
       : '<div class="detail-image-placeholder ' + r.category + '">' + placeholderIconSvg() + '</div>';
 
@@ -1576,48 +1584,57 @@
       : '<div class="hint">No method listed.</div>';
 
     const scalerHtml = (typeof r.servings === 'number')
-      ? '<div class="scaler"><button type="button" id="scaler-minus" aria-label="Fewer servings">−</button>' +
+      ? '<div class="scaler"><button type="button" id="scaler-minus" aria-label="Fewer servings">\u2212</button>' +
         '<span class="scaler-label" id="detail-scaler-label"></span>' +
         '<button type="button" id="scaler-plus" aria-label="More servings">+</button>' +
         '<span class="hint" style="margin:0;">quantities adjust</span></div>'
       : '';
 
-    const estimateHtml = r.ingredients.length
-      ? '<div style="margin:0 0 16px;"><button type="button" class="btn-secondary" id="estimate-nutrition-btn">Estimate nutrition from ingredients</button></div>'
+    const estimateBtnHtml = r.ingredients.length
+      ? '<button type="button" class="btn-secondary" id="estimate-nutrition-btn">Estimate nutrition from ingredients</button>'
       : '';
 
     const notesHtml = r.notes
-      ? '<div class="detail-section"><h4>Notes</h4><div class="notes-box">' + escapeHtml(r.notes) + '</div></div>'
+      ? '<div class="detail-card" style="margin-top:20px;"><h4>Notes</h4><div class="notes-box" style="border:none; padding:0;">' + escapeHtml(r.notes) + '</div></div>'
       : '';
 
-    const timeTag = typeof r.timeMinutes === 'number'
-      ? '<span class="detail-tag time-tag">⏱ ' + r.timeMinutes + ' min</span>'
-      : '';
-
-    const cookedLine = r.lastCookedAt
-      ? '<div class="hint" style="margin:-6px 0 16px;">Last cooked ' + formatRelativeTime(r.lastCookedAt) + '</div>'
-      : '';
+    const metaBits = ['<span class="cat">' + CAT_LABEL[r.category] + '</span>'];
+    if (typeof r.timeMinutes === 'number') metaBits.push('<span>\u23f1 ' + r.timeMinutes + ' min</span>');
+    if (typeof r.servings === 'number') metaBits.push('<span>🍽 ' + r.servings + ' servings</span>');
+    if (r.lastCookedAt) metaBits.push('<span>Cooked ' + formatRelativeTime(r.lastCookedAt) + '</span>');
 
     const infoBits = [];
-    if (typeof r.servings === 'number') infoBits.push('Serves ' + r.servings);
     if (r.nutrition){
       if (typeof r.nutrition.calories === 'number') infoBits.push(r.nutrition.calories + ' kcal');
       if (typeof r.nutrition.protein === 'number') infoBits.push(r.nutrition.protein + 'g protein');
       if (typeof r.nutrition.carbs === 'number') infoBits.push(r.nutrition.carbs + 'g carbs');
       if (typeof r.nutrition.fat === 'number') infoBits.push(r.nutrition.fat + 'g fat');
     }
-    const nutritionLine = infoBits.length
-      ? '<div class="hint" style="margin:-6px 0 16px;">' + infoBits.join(' · ') +
-        (r.nutrition ? ' <span class="tag-note">(per serving, approximate)</span>' : '') + '</div>'
-      : '';
+    const nutritionText = infoBits.length
+      ? '<b>' + infoBits.join(' \u00b7 ') + '</b> <span class="tag-note">(per serving, approximate)</span>'
+      : 'No nutrition saved yet \u2014 estimate it from the ingredients.';
 
-    $('#detail-body-content').innerHTML =
-      '<span class="detail-tag ' + r.category + '">' + CAT_LABEL[r.category] + '</span>' + timeTag +
-      '<h2>' + escapeHtml(r.title) + '</h2>' +
-      cookedLine + nutritionLine + estimateHtml +
-      '<div class="detail-section"><h4>Ingredients</h4>' + scalerHtml + '<div id="detail-ingredients"></div></div>' +
-      '<div class="detail-section"><h4>Method</h4>' + stepsHtml + '</div>' +
-      notesHtml;
+    mainEl.innerHTML =
+      '<div class="detail-page">' +
+      '<button type="button" class="detail-back" id="detail-close">\u2190 All recipes</button>' +
+      '<div class="detail-actions-page">' +
+        '<button class="icon-btn" id="detail-edit" aria-label="Edit recipe" title="Edit recipe">' +
+          '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>' +
+        '<button class="icon-btn danger" id="detail-delete" aria-label="Delete recipe" title="Delete recipe">' +
+          '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>' +
+      '</div>' +
+      '<h1 class="detail-title">' + escapeHtml(r.title) + '</h1>' +
+      '<div class="detail-meta">' + metaBits.join('') + '</div>' +
+      '<div class="detail-hero" id="detail-image-wrap">' + heroHtml + '</div>' +
+      '<div class="detail-grid">' +
+        '<div class="detail-card"><h4>Ingredients</h4>' + scalerHtml + '<div id="detail-ingredients"></div></div>' +
+        '<div class="detail-card"><h4>Method</h4>' + stepsHtml + '</div>' +
+      '</div>' +
+      '<div class="detail-nutbar"><div class="nut-text">' + nutritionText + '</div>' +
+        '<div class="nut-actions">' + estimateBtnHtml +
+        '<button type="button" class="btn-primary" id="detail-cooked">\u2713 Mark as cooked</button></div></div>' +
+      notesHtml +
+      '</div>';
 
     renderDetailIngredients(r);
 
@@ -1634,48 +1651,32 @@
       renderDetailIngredients(r);
     });
 
-    detailOverlay.classList.add('open');
+    $('#detail-close').addEventListener('click', closeDetail);
+    $('#detail-edit').addEventListener('click', function(){ openEditModal(r); });
+    $('#detail-delete').addEventListener('click', async function(){
+      if (!confirm('Delete "' + r.title + '"? This cannot be undone.')) return;
+      recipes = recipes.filter(function(x){ return x.id !== r.id; });
+      const ok = await persist();
+      if (ok){ closeDetail(); showToast('Recipe deleted'); }
+    });
+    $('#detail-cooked').addEventListener('click', async function(){
+      const rec = recipes.find(function(x){ return x.id === currentDetailId; });
+      if (!rec) return;
+      rec.lastCookedAt = Date.now();
+      const ok = await persist();
+      if (ok){ openDetail(rec.id); showToast('Logged as cooked just now'); }
+    });
+
+    window.scrollTo(0, 0);
     requestWakeLock();
   }
 
   function closeDetail(){
-    detailOverlay.classList.remove('open');
+    if (!currentDetailId) return;
     currentDetailId = null;
     releaseWakeLock();
+    render();
   }
-
-  $('#detail-close').addEventListener('click', closeDetail);
-  detailOverlay.addEventListener('click', function(e){ if (e.target === detailOverlay) closeDetail(); });
-
-  $('#detail-cooked').addEventListener('click', async function(){
-    const r = recipes.find(function(x){ return x.id === currentDetailId; });
-    if (!r) return;
-    r.lastCookedAt = Date.now();
-    const ok = await persist();
-    if (ok){
-      openDetail(r.id); // refresh to show the updated "last cooked" line
-      render();
-      showToast('Logged as cooked just now');
-    }
-  });
-
-  $('#detail-edit').addEventListener('click', function(){
-    const r = recipes.find(function(x){ return x.id === currentDetailId; });
-    if (r) openEditModal(r);
-  });
-
-  $('#detail-delete').addEventListener('click', async function(){
-    const r = recipes.find(function(x){ return x.id === currentDetailId; });
-    if (!r) return;
-    if (!confirm('Delete "' + r.title + '"? This cannot be undone.')) return;
-    recipes = recipes.filter(function(x){ return x.id !== r.id; });
-    const ok = await persist();
-    if (ok){
-      closeDetail();
-      render();
-      showToast('Recipe deleted');
-    }
-  });
 
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape'){
@@ -2076,7 +2077,7 @@
   // is only ever fetched once, and repeat estimates work offline.
   const nutritionOverlay = $('#nutrition-overlay');
   const FDC_KEY_STORAGE = 'fdc-api-key';
-  const NUTRITION_CACHE_KEY = 'nutrition-cache';
+  const NUTRITION_CACHE_KEY = 'nutrition-cache-v2'; // batch 3: v1 held the bad Indian-spice matches, so it is not reused
   let nutritionCache = null;
   let currentEstimate = null;
 
@@ -2101,6 +2102,13 @@
       try{ nutritionCache = JSON.parse(window.localStorage.getItem(NUTRITION_CACHE_KEY) || '{}'); }
       catch(e){ nutritionCache = {}; }
     }
+    // Purge any cached match that the batch-3 filter would reject (belt and
+    // braces: the v2 key already starts fresh, this also cleans a v2 cache
+    // written by an older build of this file).
+    Object.keys(nutritionCache).forEach(function(k){
+      const f = nutritionCache[k];
+      if (f && f.description && isBadMatch(k, f.description)) delete nutritionCache[k];
+    });
     return nutritionCache;
   }
 
@@ -2163,22 +2171,125 @@
     };
   }
 
+  /* TESTABLE_START
+     Pure nutrition logic, no DOM / no network: the node test extracts this
+     block verbatim from index.html and runs it, so keep it self-contained
+     (only plain JS, no references to outer variables except WEIGHT_GRAMS /
+     UNIT_ALIASES / VOLUME_TSP, which the test defines first). */
+  const NUTRITION_OVERRIDES = [
+    // per-100g values are USDA SR Legacy / Foundation values where they
+    // exist; "local estimate" rows are labelled as such in the description.
+    { keys: ['salt'], desc: 'Salt, table', per100g: { calories: 0, protein: 0, carbs: 0, fat: 0 }, grams: { tablespoon: 18, teaspoon: 6, cup: 288 } },
+    { keys: ['chilli powder', 'chili powder', 'kashmiri chilli', 'kashmiri chili', 'chilli flakes', 'chili flakes'], desc: 'Spices, chili powder', per100g: { calories: 282, protein: 13.5, carbs: 49.9, fat: 14.3 }, grams: { tablespoon: 8, teaspoon: 2.7, cup: 128 } },
+    { keys: ['garam masala'], desc: 'Spices, garam masala (local estimate)', per100g: { calories: 325, protein: 12, carbs: 55, fat: 14 }, grams: { tablespoon: 7, teaspoon: 2.3, cup: 112 } },
+    { keys: ['turmeric'], desc: 'Spices, turmeric, ground', per100g: { calories: 312, protein: 9.7, carbs: 67.1, fat: 3.3 }, grams: { tablespoon: 9, teaspoon: 3, cup: 144 } },
+    { keys: ['coriander powder', 'cilantro powder', 'ground coriander', 'dhania powder'], desc: 'Spices, coriander seed, ground', per100g: { calories: 298, protein: 12.4, carbs: 55, fat: 17.8 }, grams: { tablespoon: 7, teaspoon: 2.3, cup: 112 } },
+    { keys: ['coriander leaves', 'cilantro leaves', 'coriander leaf', 'cilantro leaf', 'dhania leaves'], desc: 'Coriander (cilantro) leaves, raw', per100g: { calories: 23, protein: 2.1, carbs: 3.7, fat: 0.5 }, grams: { tablespoon: 2, teaspoon: 0.7, cup: 16 }, defaultGrams: 5 },
+    { keys: ['mint leaves', 'mint leaf', 'pudina'], desc: 'Mint, fresh', per100g: { calories: 44, protein: 3.3, carbs: 8.4, fat: 0.7 }, grams: { tablespoon: 3, teaspoon: 1, cup: 48 }, defaultGrams: 5 },
+    { keys: ['ghee'], desc: 'Butter, clarified butter (ghee)', per100g: { calories: 876, protein: 0, carbs: 0, fat: 99.5 }, grams: { tablespoon: 14, teaspoon: 4.7, cup: 218 } },
+    { keys: ['ginger garlic paste', 'ginger-garlic paste', 'ginger garlic'], desc: 'Ginger garlic paste (local estimate)', per100g: { calories: 100, protein: 2, carbs: 20, fat: 0.5 }, grams: { tablespoon: 15, teaspoon: 5, cup: 240 } },
+    { keys: ['greek yoghurt', 'greek yogurt'], desc: 'Yogurt, Greek, plain, whole milk', per100g: { calories: 97, protein: 9, carbs: 4, fat: 5 }, grams: { tablespoon: 15, teaspoon: 5, cup: 245 } },
+    { keys: ['cumin powder', 'ground cumin', 'cumin seed', 'cumin seeds', 'cumin', 'jeera'], desc: 'Spices, cumin seed', per100g: { calories: 375, protein: 17.8, carbs: 44.2, fat: 22.3 }, grams: { tablespoon: 6, teaspoon: 2, cup: 96 } },
+    { keys: ['cinnamon'], desc: 'Spices, cinnamon, ground', per100g: { calories: 247, protein: 4, carbs: 80.6, fat: 1.2 }, grams: { tablespoon: 8, teaspoon: 2.6, cup: 128 } },
+    { keys: ['paprika'], desc: 'Spices, paprika', per100g: { calories: 282, protein: 14.1, carbs: 53.99, fat: 12.9 }, grams: { tablespoon: 7, teaspoon: 2.3, cup: 112 } }
+  ];
+  // Generic tbsp/tsp gram weights, used only when USDA publishes no portion
+  // weight for the food — so a tbsp/tsp line is never skipped just for that.
+  const GENERIC_TBSP_GRAMS = [
+    { keys: ['salt'], grams: 18 },
+    { keys: ['sugar'], grams: 12 },
+    { keys: ['oil', 'ghee', 'butter'], grams: 14 },
+    { keys: ['yogurt', 'yoghurt'], grams: 15 },
+    { keys: ['flour'], grams: 8 },
+    { keys: ['spice', 'powder', 'masala', 'chilli', 'chili', 'turmeric', 'cumin', 'coriander', 'cilantro', 'paprika', 'cinnamon', 'garam'], grams: 7 },
+    { keys: ['paste', 'sauce'], grams: 15 },
+    { keys: ['honey', 'syrup'], grams: 21 },
+    { keys: ['leaves', 'herb'], grams: 2 }
+  ];
+  function normKey(text){
+    return String(text || '').toLowerCase().replace(/yoghurt/g, 'yogurt').replace(/chilli/g, 'chili').replace(/[^a-z0-9\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  function findOverride(core, raw){
+    const hay = normKey(core) + ' ' + normKey(raw);
+    for (let i = 0; i < NUTRITION_OVERRIDES.length; i++){
+      const o = NUTRITION_OVERRIDES[i];
+      for (let j = 0; j < o.keys.length; j++){
+        if (hay.indexOf(normKey(o.keys[j])) > -1) return o;
+      }
+    }
+    return null;
+  }
+  function genericGramsFor(unit, core, raw){
+    const hay = normKey(core) + ' ' + normKey(raw);
+    const tbsp = (unit === 'tablespoon' || unit === 'tbsp') ? 1 : (unit === 'teaspoon' || unit === 'tsp') ? 1 / 3 : null;
+    if (tbsp == null) return null;
+    for (let i = 0; i < GENERIC_TBSP_GRAMS.length; i++){
+      const g = GENERIC_TBSP_GRAMS[i];
+      for (let j = 0; j < g.keys.length; j++){
+        if (hay.indexOf(g.keys[j]) > -1) return g.grams * tbsp;
+      }
+    }
+    return 10 * tbsp; // last resort: a level tablespoon is ~10 g of most foods
+  }
+  // Reject USDA results that are clearly not the food asked for. These are
+  // the exact bad matches Viba pasted on Oct 25, generalised: a spice/paste/
+  // dairy query must never come back as a fruit powder, a soup, a leafy
+  // green from another plant, a nut paste, or a flavoured/branded yoghurt.
+  const BAD_MATCH_TOKENS = ['baobab', 'smart soup', 'drumstick', 'moringa', 'almond paste'];
+  function isBadMatch(core, desc){
+    const c = normKey(core), d = String(desc || '').toLowerCase();
+    for (let i = 0; i < BAD_MATCH_TOKENS.length; i++){
+      if (d.indexOf(BAD_MATCH_TOKENS[i]) > -1 && c.indexOf(BAD_MATCH_TOKENS[i]) === -1) return true;
+    }
+    if (d.indexOf('soup') > -1 && /chili|chilli|garam|masala|turmeric|cumin|coriander|cilantro|spice/.test(c)) return true;
+    if ((c.indexOf('yogurt') > -1 || c.indexOf('yoghurt') > -1) &&
+        (d.indexOf('blueberry') > -1 || d.indexOf('strawberry') > -1 || d.indexOf('vanilla') > -1 || d.indexOf('honey') > -1 || d.indexOf('chobani') > -1)) return true;
+    return false;
+  }
+  function correctQuery(core){
+    // "brest" is the typo from her pasted recipe; chili/yoghurt are spelling
+    // variants USDA's search handles worse than the canonical forms.
+    return normKey(core).replace(/\bbrest\b/g, 'breast');
+  }
+  function overrideGrams(entry, parsed){
+    const q = parsed.quantity;
+    if (q == null) return (typeof entry.defaultGrams === 'number') ? entry.defaultGrams : null;
+    const unit = parsed.unit;
+    if (!unit) return (typeof entry.defaultGrams === 'number') ? entry.defaultGrams : null;
+    if (WEIGHT_GRAMS[unit]) return WEIGHT_GRAMS[unit] * q;
+    const alias = UNIT_ALIASES[unit] || unit;
+    if (entry.grams[unit]) return entry.grams[unit] * q;
+    if (entry.grams[alias]) return entry.grams[alias] * q;
+    if (unit === 'teaspoon' || unit === 'tsp') return entry.grams.tablespoon ? entry.grams.tablespoon / 3 * q : null;
+    if (unit === 'tablespoon' || unit === 'tbsp') return entry.grams.teaspoon ? entry.grams.teaspoon * 3 * q : null;
+    if (VOLUME_TSP[unit]) return genericGramsFor(unit, parsed.ingredient, parsed.raw);
+    return null;
+  }
+  /* TESTABLE_END */
+
   async function fetchFoodFor(core){
     const key = getFdcKey();
+    const query = correctQuery(core);
     const searchUrl = 'https://api.nal.usda.gov/fdc/v1/foods/search?api_key=' + encodeURIComponent(key) +
-      '&query=' + encodeURIComponent(core) + '&pageSize=5&dataType=' + encodeURIComponent('Foundation,SR Legacy');
+      '&query=' + encodeURIComponent(query) + '&pageSize=10&dataType=' + encodeURIComponent('Foundation,SR Legacy');
     const res = await fetch(searchUrl);
     if (!res.ok) throw new Error('USDA search failed (' + res.status + ')');
     const data = await res.json();
     const foods = (data && data.foods) || [];
     if (!foods.length) return null;
-    const words = core.split(' ').filter(Boolean);
+    const words = query.split(' ').filter(Boolean);
+    // Filter first: drop nonsense fuzzy matches, then prefer an exact-name
+    // match, then a match containing every query word, then the first
+    // remaining (Foundation foods sort before SR Legacy in the results).
+    const usable = foods.filter(function(f){ return !isBadMatch(core, f.description || ''); });
+    if (!usable.length) return null;
     let best = null;
-    for (let i = 0; i < foods.length; i++){
-      const slim = slimFood(foods[i]);
+    for (let i = 0; i < usable.length; i++){
+      const slim = slimFood(usable[i]);
       if (!slim) continue;
       if (!best) best = slim;
-      const desc = (foods[i].description || '').toLowerCase();
+      const desc = (usable[i].description || '').toLowerCase();
+      if (desc === query){ best = slim; break; }
       if (words.every(function(w){ return desc.indexOf(w) > -1; })){ best = slim; break; }
     }
     if (!best) return null;
@@ -2215,6 +2326,10 @@
       // Convert through any volume portion the food does publish (e.g. cup).
       const vp = portions.find(function(pp){ return VOLUME_TSP[pp.unit]; });
       if (vp) return vp.grams * (VOLUME_TSP[unit] / VOLUME_TSP[vp.unit]) * q;
+      // Batch 3: no USDA portion weight — fall back to a generic tbsp/tsp
+      // weight for this kind of food instead of skipping the line entirely.
+      const generic = genericGramsFor(unit, parsed.ingredient, parsed.raw);
+      if (generic != null) return generic * q;
       return null;
     }
     // Piece-like units (clove, slice, can…): match on the portion description.
@@ -2236,12 +2351,32 @@
   }
 
   async function resolveIngredient(parsed){
+    // 1. Local override first: Indian spices/pastes/dairy never go to USDA
+    //    search at all, so they can never come back as Baobab / soup / etc.
+    const override = findOverride(parsed.ingredient, parsed.raw);
+    if (override){
+      const grams = overrideGrams(override, parsed);
+      if (grams != null){
+        const f = grams / 100;
+        return {
+          status: 'ok', food: { description: override.desc, per100g: override.per100g },
+          core: parsed.alternatives[0], grams: grams,
+          calories: override.per100g.calories * f,
+          protein: override.per100g.protein * f,
+          carbs: override.per100g.carbs * f,
+          fat: override.per100g.fat * f
+        };
+      }
+    }
     const cache = await loadNutritionCache();
     for (let i = 0; i < parsed.alternatives.length; i++){
       const core = parsed.alternatives[i];
       if (Object.prototype.hasOwnProperty.call(cache, core)){
         const cached = cache[core];
-        if (cached) return finishResolve(parsed, cached, core);
+        if (cached){
+          if (isBadMatch(core, cached.description)){ delete cache[core]; await saveNutritionCache(); continue; }
+          return finishResolve(parsed, cached, core);
+        }
       }
     }
     const core = parsed.alternatives[0];
@@ -2371,9 +2506,7 @@
     const ok = await persist();
     if (ok){
       nutritionOverlay.classList.remove('open');
-      closeDetail();
       openDetail(r.id);
-      render();
       showToast('Nutrition estimate saved');
     }
   });
