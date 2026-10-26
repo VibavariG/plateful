@@ -428,8 +428,26 @@
   }
   .btn-secondary:hover{ border-color:var(--ink-soft); color:var(--ink); }
 
+  /* Structured ingredient rows (batch 4 patch) */
+  .ing-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+  .ing-row .plain-input{ width:auto; }
+  .ing-amount{ width:76px; flex:0 0 76px; padding:10px 8px; text-align:center; }
+  .ing-unit{ width:104px; flex:0 0 104px; }
+  .ing-name{ flex:1 1 140px; min-width:120px; }
+  .ing-sec{ flex:1 1 140px; min-width:120px; font-weight:700; }
+  .ing-row-section{ background:var(--card-soft); border:1.5px dashed var(--line-card); border-radius:10px; padding:8px; }
+  .ing-remove{ width:32px; height:32px; flex:0 0 32px; border-radius:50%; border:1.5px solid var(--line-card); background:transparent; color:var(--ink-soft); font-size:1.1rem; line-height:1; cursor:pointer; padding:0; }
+  .ing-remove:hover{ border-color:var(--dessert); color:var(--dessert); }
+  .ing-actions{ display:flex; gap:8px; flex-wrap:wrap; margin:4px 0 8px; }
+  .ing-add-btn{ padding:9px 14px; font-size:0.85rem; }
+  button.ing-toggle{ background:none; border:none; color:var(--ink-soft); font-size:0.8rem; text-decoration:underline; padding:4px 0; cursor:pointer; }
+  @media (max-width:520px){
+    .ing-amount{ width:64px; flex-basis:64px; }
+    .ing-unit{ width:92px; flex-basis:92px; }
+  }
+
   /* Detail view */
-  #detail-image-wrap{ aspect-ratio:16/9; overflow:hidden; }
+  #detail-image-wrap{ aspect-ratio:auto; height:340px; overflow:hidden; }
   .detail-image{ width:100%; height:100%; object-fit:cover; display:block; }
   .detail-image-placeholder{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
   .detail-image-placeholder .icon{ width:44px; height:44px; opacity:0.5; }
@@ -601,8 +619,12 @@
   .detail-meta{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
   .detail-meta span{ background:#fff; border:1px solid var(--line-card); border-radius:999px; padding:7px 13px; font-size:0.83rem; font-weight:600; color:var(--ink); }
   .detail-meta span.cat{ background:var(--meal); color:#fff; border-color:var(--meal); }
-  .detail-hero{ aspect-ratio:16/9; overflow:hidden; border-radius:16px; margin-bottom:22px; background:var(--card-soft); }
+  .detail-hero{ aspect-ratio:auto; height:340px; overflow:hidden; border-radius:16px; margin-bottom:22px; background:var(--card-soft); cursor:zoom-in; }
   .detail-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
+  /* Tap the capped hero to see the full photo (in-app overlay, works for
+     dataURL photos where window.open is blocked). */
+  #photo-overlay{ align-items:center; padding:20px; background:rgba(15,12,10,0.88); }
+  #photo-overlay img{ max-width:94vw; max-height:90vh; object-fit:contain; border-radius:12px; display:block; }
   .detail-grid{ display:grid; grid-template-columns:380px 1fr; gap:28px; align-items:start; }
   .detail-card{ background:#fff; border:1px solid #DDE6D3; border-radius:16px; padding:22px; }
   .detail-card h4{
@@ -619,8 +641,24 @@
   @media (max-width:720px){
     .detail-grid{ grid-template-columns:1fr; }
     .detail-title{ font-size:1.9rem; }
-    .detail-hero{ aspect-ratio:4/3; }
+    .detail-hero{ aspect-ratio:auto; height:200px; }
+    #detail-image-wrap{ height:200px; }
   }
+
+  /* ---------- Sync (batch 4) ---------- */
+  .sync-pill{
+    display:inline-flex; align-items:center; gap:8px;
+    background:#fff; border:1px solid var(--line); border-radius:999px;
+    padding:9px 14px; font-size:0.83rem; font-weight:700; color:var(--ink);
+  }
+  .sync-pill:hover{ border-color:var(--meal); }
+  .sync-dot{ width:9px; height:9px; border-radius:50%; background:#9AA48F; flex:none; }
+  .sync-dot.ok{ background:var(--meal); }
+  .sync-dot.warn{ background:#C98A2E; }
+  .sync-dot.bad{ background:#A84A6B; }
+  .sync-setup{ margin:6px 0 0; padding-left:20px; font-size:0.9rem; line-height:1.65; color:var(--ink); }
+  .sync-setup li{ margin-bottom:6px; }
+  .sync-setup code{ font-family:var(--font-mono); font-size:0.8rem; background:var(--meal-soft); padding:1px 5px; border-radius:4px; }
 
   @media (max-width:520px){
     .header-top{ align-items:flex-start; }
@@ -646,6 +684,9 @@
         <svg class="icon" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 19h16"/></svg>
       </button>
       <input type="file" id="restore-input" accept="application/json,.json" style="display:none;">
+      <button class="sync-pill" id="sync-btn" title="Sync recipes between phone and laptop">
+        <span class="sync-dot" id="sync-dot"></span><span id="sync-status-text">Sync off</span>
+      </button>
       <button class="new-recipe-btn" id="open-add-btn">
         <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
         New recipe
@@ -766,8 +807,14 @@
         </div>
         <div class="field">
           <label>Ingredients</label>
-          <textarea class="plain-area" id="field-ingredients" placeholder="2 cups flour&#10;1 tsp baking soda&#10;3 ripe bananas, mashed"></textarea>
-          <div class="hint">One ingredient per line. For recipes with separate parts (e.g. a paste made ahead), start a line with ## — like "## Chilli paste" — to group everything under it.</div>
+          <div id="ingredients-rows" aria-label="Ingredients"></div>
+          <div class="ing-actions" id="ing-actions">
+            <button type="button" class="btn-secondary ing-add-btn" id="ing-add">+ Add ingredient</button>
+            <button type="button" class="btn-secondary ing-add-btn" id="ing-add-section">+ Add section</button>
+          </div>
+          <button type="button" class="ing-toggle" id="ing-toggle-text">Switch to text</button>
+          <textarea class="plain-area" id="field-ingredients" placeholder="2 cups flour&#10;1 tsp baking soda&#10;3 ripe bananas, mashed" style="display:none;"></textarea>
+          <div class="hint">Amount + unit + name, one ingredient per row. Use “Add section” for separate parts (e.g. Marinade) — a section groups the rows under it. “Switch to text” edits the same lines as plain text, one per line, with ## for sections.</div>
         </div>
         <div class="field">
           <label>Method</label>
@@ -849,6 +896,12 @@
         <input type="text" class="plain-input" id="fdc-key" placeholder="Paste your free key — or leave blank to use the shared demo key">
         <div class="hint">The shared demo key is heavily rate-limited. A free personal key takes two minutes: <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">fdc.nal.usda.gov/api-key-signup</a>. Saved on this device only.</div>
       </div>
+      <div class="field">
+        <label>Servings</label>
+        <input type="number" class="plain-input" id="nutrition-servings" min="1" step="1" placeholder="e.g. 4" style="max-width:120px;">
+        <div class="hint">Per-serving values and Save need a serving count. If this recipe has none yet, enter it here — saving also sets the recipe's servings, so the detail page shows the servings chip and scaler.</div>
+      </div>
+      <p class="hint" style="margin:0 0 14px;"><b>Nothing is saved until you tap “Save estimate to recipe”.</b> Closing this panel with the × or by tapping outside discards the estimate — the recipe is unchanged.</p>
       <div id="nutrition-content"></div>
       <div class="tonight-actions">
         <button type="button" class="btn-secondary" id="nutrition-reset-cache">Reset saved matches</button>
@@ -856,6 +909,58 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- Sync panel (batch 4) -->
+<div class="overlay" id="sync-overlay">
+  <div class="panel" style="max-width:620px;">
+    <button class="panel-close" id="sync-close" aria-label="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
+      <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Sync between phone &amp; laptop</h2>
+      <p class="finder-intro" id="sync-panel-status">Sync keeps the same recipes, cooked history and pantry on both devices. Your recipes still live on this device first and the app works fully offline — sync just copies changes across when you're online.</p>
+      <div class="field">
+        <label>Supabase project URL</label>
+        <input type="text" class="plain-input" id="sync-url" placeholder="https://xxxx.supabase.co" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Supabase anon key</label>
+        <input type="password" class="plain-input" id="sync-anon" placeholder="Paste the anon public key" autocomplete="off">
+        <div class="hint">Saved on this device only, like your USDA key — never in the code or the repo. Supabase dashboard → Settings → API → Project URL + anon public key.</div>
+      </div>
+      <div class="field">
+        <label>Email (your Supabase Auth account)</label>
+        <input type="email" class="plain-input" id="sync-email" placeholder="you@example.com" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" class="plain-input" id="sync-password" placeholder="Your Supabase account password" autocomplete="current-password">
+        <div class="hint">Used only to sign in on this device. It is never stored — only the login session is kept, on this device.</div>
+      </div>
+      <div class="tonight-actions">
+        <button type="button" class="btn-primary" id="sync-signin">Sign in</button>
+        <button type="button" class="btn-secondary" id="sync-signout">Sign out</button>
+        <button type="button" class="btn-secondary" id="sync-now">Sync now</button>
+      </div>
+      <p class="hint" id="sync-last"></p>
+      <div class="field">
+        <label>First-time setup (do once, in Supabase)</label>
+        <ol class="sync-setup">
+          <li>In the Supabase dashboard for the blog project, open <b>SQL Editor</b> and run <code>schema.sql</code> (shipped with this batch). It creates a <code>plateful_sync</code> table with Row Level Security: only your signed-in account can read or write its own rows. No anon access at all.</li>
+          <li><b>Authentication → Users → Add user</b> — create your account (email + password), or use your existing blog admin login. There is no public sign-up.</li>
+          <li>Paste the Project URL + anon key above, on <b>this</b> device, and sign in. Repeat on your other device.</li>
+          <li>Tap <b>Sync now</b> on the laptop first, then on the phone. After that it syncs by itself when you add, edit, cook or delete a recipe.</li>
+        </ol>
+        <div class="hint">Photos sync inside the recipe (no Storage bucket needed). The nutrition cache and your USDA key stay on each device. JSON backup/restore still works as a fallback.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Full-photo view (tap the detail hero) -->
+<div class="overlay" id="photo-overlay">
+  <img id="photo-overlay-img" src="" alt="">
 </div>
 
 <div class="toast" id="toast"></div>
@@ -885,11 +990,11 @@
   const mainEl = $('#main-content');
   const toastEl = $('#toast');
 
-  function showToast(msg){
+  function showToast(msg, ms){
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 2400);
+    showToast._t = setTimeout(function(){ toastEl.classList.remove('show'); }, ms || 2400);
   }
 
   function escapeHtml(str){
@@ -985,21 +1090,23 @@
   }
 
   async function persist(){
+    let ok = false;
     if (storageMode === 'idb'){
-      const ok = await idbSet(STORAGE_KEY, recipes);
+      ok = await idbSet(STORAGE_KEY, recipes);
       if (!ok) showToast("Couldn't save — try Backup to keep a JSON copy");
-      return ok;
-    }
-    if (storageMode === 'local'){
+    } else if (storageMode === 'local'){
       try{
         window.localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
-        return true;
+        ok = true;
       }catch(e){
         showToast("Storage is full — try Backup, then remove a photo");
-        return false;
+        ok = false;
       }
+    } else {
+      ok = true; // memory mode: kept for this session only
     }
-    return true; // memory mode: kept for this session only
+    if (ok) scheduleSync(); // batch 4: push the change when online
+    return ok;
   }
 
   function normalizeRecipe(r){
@@ -1027,6 +1134,9 @@
       steps: Array.isArray(r.steps) ? r.steps : [],
       notes: typeof r.notes === 'string' ? r.notes : '',
       createdAt: r.createdAt || Date.now(),
+      // batch 4: sync clock. Existing recipes get updatedAt = createdAt, so
+      // a first sync treats them as their creation time, not as "now".
+      updatedAt: (typeof r.updatedAt === 'number') ? r.updatedAt : (r.createdAt || Date.now()),
       lastCookedAt: (typeof r.lastCookedAt === 'number') ? r.lastCookedAt : null
     };
   }
@@ -1240,6 +1350,178 @@
     '</div>';
   }
 
+  // ---------- Structured ingredient rows (batch 4 patch) ----------
+  // The form shows one row per ingredient: Amount + Unit dropdown + Name.
+  // Rows convert back to the exact canonical text lines the app already
+  // stores ("1 tbsp red chilli powder", "800 g boneless chicken breast,
+  // cut into cubes", "coriander leaves, chopped"), so storage, sync,
+  // JSON backup, Cook Finder, the serving scaler and the nutrition
+  // estimator all work unchanged — no data migration, no new schema.
+  // ## section lines round-trip as heading rows. A line the row parser
+  // cannot split (e.g. "salt to taste", "sugar or honey") is kept whole
+  // in the Name field, so editing never loses or rewrites it.
+  const ING_UNITS = ['none','g','kg','ml','l','cup','cups','tbsp','tsp','oz','lb','piece','pieces','clove','cloves','pinch'];
+  const ING_UNIT_LABELS = { none:'—', g:'g', kg:'kg', ml:'ml', l:'l', cup:'cup', cups:'cups', tbsp:'tbsp', tsp:'tsp', oz:'oz', lb:'lb', piece:'piece', pieces:'pieces', clove:'clove', cloves:'cloves', pinch:'pinch' };
+  const ING_PLURALS = { cup:'cups', piece:'pieces', clove:'cloves' };
+  const ING_SINGULARS = { cups:'cup', pieces:'piece', cloves:'clove' };
+  const ING_AMOUNT_RE = /^\s*((?:\d+\s+\d+\/\d+|\d+\/\d+|[¼½¾⅓⅔⅕⅖⅗⅘⅙⅚⅛⅜⅝⅞]|\d+(?:\.\d+)?)(?:\s*(?:-|to)\s*(?:\d+(?:\.\d+)?|\d+\/\d+))?)\s*/;
+  const ING_UNICODE_FRAC = { '¼':0.25,'½':0.5,'¾':0.75,'⅓':1/3,'⅔':2/3,'⅕':0.2,'⅖':0.4,'⅗':0.6,'⅘':0.8,'⅙':1/6,'⅚':5/6,'⅛':0.125,'⅜':0.375,'⅝':0.625,'⅞':0.875 };
+  let ingMode = 'rows'; // 'rows' | 'text'
+
+  function ingAmountValue(token){
+    if (!token) return null;
+    const first = String(token).trim().split(/\s*(?:-|to)\s*/)[0].trim();
+    if (/^\d+\s+\d+\/\d+$/.test(first)){
+      const p = first.split(/\s+/), f = p[1].split('/');
+      return parseInt(p[0], 10) + (parseInt(f[0], 10) / parseInt(f[1], 10));
+    }
+    if (/^\d+\/\d+$/.test(first)){
+      const f = first.split('/');
+      return parseInt(f[0], 10) / parseInt(f[1], 10);
+    }
+    if (ING_UNICODE_FRAC.hasOwnProperty(first)) return ING_UNICODE_FRAC[first];
+    const v = parseFloat(first);
+    return isNaN(v) ? null : v;
+  }
+  function ingUnitFor(amountToken, singularUnit){
+    if (!singularUnit) return 'none';
+    const plural = ING_PLURALS[singularUnit];
+    if (!plural) return singularUnit;
+    return ingAmountValue(amountToken) === 1 ? singularUnit : plural;
+  }
+  function ingLineToRow(line){
+    const sec = line.match(/^##\s*(.*)$/);
+    if (sec) return { type:'section', title: sec[1].trim() };
+    let text = line, amount = '';
+    const am = text.match(ING_AMOUNT_RE);
+    if (am){ amount = am[1].trim(); text = text.slice(am[0].length); }
+    let unit = 'none';
+    const um = text.match(/^\s*([a-zA-Z]+)\.?\b/);
+    if (um){
+      const w = um[1].toLowerCase();
+      const sing = ING_SINGULARS[w] || w;
+      if (ING_UNITS.indexOf(w) > -1 || ING_UNITS.indexOf(sing) > -1){
+        unit = ingUnitFor(amount, sing);
+        text = text.slice(um[0].length);
+      }
+    }
+    const name = text.trim();
+    if (!name) return { type:'ingredient', amount:'', unit:'none', name: line.trim() };
+    return { type:'ingredient', amount: amount, unit: unit, name: name };
+  }
+  function ingRowToLine(row){
+    if (row.type === 'section') return '## ' + (row.title || '').trim();
+    const parts = [];
+    if (row.amount) parts.push(row.amount);
+    if (row.unit && row.unit !== 'none'){
+      const sing = ING_SINGULARS[row.unit] || row.unit;
+      parts.push(ingUnitFor(row.amount, sing));
+    }
+    if (row.name) parts.push(row.name);
+    return parts.join(' ');
+  }
+  function ingCreateRow(data){
+    data = data || { type:'ingredient', amount:'', unit:'none', name:'' };
+    const row = document.createElement('div');
+    row.className = 'ing-row' + (data.type === 'section' ? ' ing-row-section' : '');
+    if (data.type === 'section'){
+      row.innerHTML = '<input type="text" class="plain-input ing-sec" placeholder="Section name, e.g. Marinade" aria-label="Section name" value="' + escapeHtml(data.title || '') + '">' +
+        '<button type="button" class="ing-remove" aria-label="Remove section">×</button>';
+    } else {
+      const opts = ING_UNITS.map(function(u){
+        return '<option value="' + u + '"' + (u === data.unit ? ' selected' : '') + '>' + ING_UNIT_LABELS[u] + '</option>';
+      }).join('');
+      row.innerHTML = '<input type="text" class="plain-input ing-amount" placeholder="Amt" aria-label="Amount" inputmode="decimal" value="' + escapeHtml(data.amount || '') + '">' +
+        '<select class="plain-input ing-unit" aria-label="Unit">' + opts + '</select>' +
+        '<input type="text" class="plain-input ing-name" placeholder="Ingredient, e.g. red chilli powder" aria-label="Ingredient name" value="' + escapeHtml(data.name || '') + '">' +
+        '<button type="button" class="ing-remove" aria-label="Remove ingredient">×</button>';
+    }
+    row.querySelector('.ing-remove').addEventListener('click', function(){
+      row.remove();
+      ingEnsureBlankRow();
+    });
+    const nameEl = row.querySelector('.ing-name, .ing-sec');
+    if (nameEl) nameEl.addEventListener('keydown', function(e){
+      if (e.key === 'Enter'){
+        e.preventDefault();
+        const nr = ingAddRow(null, row);
+        const f = nr.querySelector('.ing-amount, .ing-sec');
+        if (f) f.focus();
+      }
+    });
+    return row;
+  }
+  function ingAddRow(data, afterEl){
+    const row = ingCreateRow(data);
+    const container = $('#ingredients-rows');
+    if (afterEl && afterEl.parentNode === container) container.insertBefore(row, afterEl.nextSibling);
+    else container.appendChild(row);
+    return row;
+  }
+  function ingEnsureBlankRow(){
+    const container = $('#ingredients-rows');
+    if (!container) return;
+    const rows = container.querySelectorAll('.ing-row');
+    if (!rows.length){ ingAddRow(null); return; }
+    const last = rows[rows.length - 1];
+    if (last.querySelector('.ing-sec')){ ingAddRow(null); return; }
+    const amt = last.querySelector('.ing-amount'), nm = last.querySelector('.ing-name');
+    if (!amt || !nm || amt.value.trim() || nm.value.trim()) ingAddRow(null);
+  }
+  function ingRenderRows(lines){
+    const container = $('#ingredients-rows');
+    container.innerHTML = '';
+    const list = (lines && lines.length) ? lines : [];
+    list.forEach(function(line){ ingAddRow(ingLineToRow(line)); });
+    ingEnsureBlankRow();
+  }
+  function ingCollectLines(){
+    const lines = [];
+    document.querySelectorAll('#ingredients-rows .ing-row').forEach(function(row){
+      const sec = row.querySelector('.ing-sec');
+      if (sec){ const t = sec.value.trim(); if (t) lines.push('## ' + t); return; }
+      const amount = row.querySelector('.ing-amount').value.trim();
+      const unit = row.querySelector('.ing-unit').value;
+      const name = row.querySelector('.ing-name').value.trim();
+      const line = ingRowToLine({ type:'ingredient', amount: amount, unit: unit, name: name });
+      if (line) lines.push(line);
+    });
+    return lines;
+  }
+  function ingSetMode(mode){
+    ingMode = mode;
+    const rowsEl = $('#ingredients-rows'), textEl = $('#field-ingredients'),
+          actionsEl = $('#ing-actions'), btn = $('#ing-toggle-text');
+    if (mode === 'text'){
+      try{ textEl.value = ingCollectLines().join('\n'); }catch(e){ /* keep textarea as-is */ }
+      rowsEl.style.display = 'none';
+      actionsEl.style.display = 'none';
+      textEl.style.display = '';
+      btn.textContent = 'Switch to rows';
+    } else {
+      const lines = textEl.value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+      ingRenderRows(lines);
+      rowsEl.style.display = '';
+      actionsEl.style.display = '';
+      textEl.style.display = 'none';
+      btn.textContent = 'Switch to text';
+    }
+  }
+  $('#ing-add').addEventListener('click', function(){
+    const row = ingAddRow(null);
+    const f = row.querySelector('.ing-amount');
+    if (f) f.focus();
+  });
+  $('#ing-add-section').addEventListener('click', function(){
+    const row = ingAddRow({ type:'section', title:'' });
+    ingAddRow(null); // a blank ingredient row under the new section, ready to type in
+    const f = row.querySelector('.ing-sec');
+    if (f) f.focus();
+  });
+  $('#ing-toggle-text').addEventListener('click', function(){
+    ingSetMode(ingMode === 'rows' ? 'text' : 'rows');
+  });
+
   // ---------- Add/Edit modal ----------
   const editOverlay = $('#edit-overlay');
   const form = $('#recipe-form');
@@ -1259,6 +1541,8 @@
     $('#field-ingredients').value = '';
     $('#field-steps').value = '';
     $('#field-notes').value = '';
+    ingSetMode('rows');
+    ingRenderRows([]);
     hideCropEditor();
     setSelectedCat(selectedCat);
     editOverlay.classList.add('open');
@@ -1277,6 +1561,8 @@
     $('#field-carbs').value = (recipe.nutrition && typeof recipe.nutrition.carbs === 'number') ? recipe.nutrition.carbs : '';
     $('#field-fat').value = (recipe.nutrition && typeof recipe.nutrition.fat === 'number') ? recipe.nutrition.fat : '';
     $('#field-ingredients').value = recipe.ingredients.join('\n');
+    ingSetMode('rows');
+    ingRenderRows(recipe.ingredients);
     $('#field-steps').value = recipe.steps.join('\n');
     $('#field-notes').value = recipe.notes || '';
     if (recipe.image) showCropEditor(recipe.image, recipe.imageFocus);
@@ -1445,7 +1731,17 @@
       fat: isNaN(fatRaw) ? null : fatRaw
     } : null;
     const notes = $('#field-notes').value.trim();
-    const ingredients = $('#field-ingredients').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+    // Structured rows are the primary input; they convert back to the
+    // canonical text lines. A row-parsing error must never block saving:
+    // fall back to the textarea lines (kept in sync when the form opens).
+    let ingredients;
+    try{
+      ingredients = (ingMode === 'text')
+        ? $('#field-ingredients').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean)
+        : ingCollectLines();
+    }catch(e){
+      ingredients = $('#field-ingredients').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
+    }
     const steps = $('#field-steps').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean);
 
     const saveBtn = $('#save-btn');
@@ -1463,6 +1759,7 @@
       ingredients: ingredients, steps: steps,
       notes: notes,
       createdAt: existing ? existing.createdAt : Date.now(),
+      updatedAt: Date.now(), // batch 4: every save is a sync change
       lastCookedAt: existing ? (existing.lastCookedAt || null) : null
     };
 
@@ -1651,10 +1948,16 @@
       renderDetailIngredients(r);
     });
 
+    // Tap the hero photo to see the full photo (hero is capped at 340px,
+    // so the whole dish is a tap away without a giant image).
+    const heroWrap = $('#detail-image-wrap');
+    if (heroWrap && r.image) heroWrap.addEventListener('click', function(){ openPhotoOverlay(r.image); });
+
     $('#detail-close').addEventListener('click', closeDetail);
     $('#detail-edit').addEventListener('click', function(){ openEditModal(r); });
     $('#detail-delete').addEventListener('click', async function(){
       if (!confirm('Delete "' + r.title + '"? This cannot be undone.')) return;
+      addTombstone(r.id); // batch 4: a delete must reach the other device too
       recipes = recipes.filter(function(x){ return x.id !== r.id; });
       const ok = await persist();
       if (ok){ closeDetail(); showToast('Recipe deleted'); }
@@ -1663,6 +1966,7 @@
       const rec = recipes.find(function(x){ return x.id === currentDetailId; });
       if (!rec) return;
       rec.lastCookedAt = Date.now();
+      rec.updatedAt = Date.now(); // batch 4: cooked history syncs too
       const ok = await persist();
       if (ok){ openDetail(rec.id); showToast('Logged as cooked just now'); }
     });
@@ -1678,8 +1982,20 @@
     render();
   }
 
+  // Full-photo overlay (tap the detail hero). Works for dataURL photos.
+  function openPhotoOverlay(src){
+    $('#photo-overlay-img').src = src;
+    $('#photo-overlay').classList.add('open');
+  }
+  function closePhotoOverlay(){
+    $('#photo-overlay').classList.remove('open');
+    $('#photo-overlay-img').src = '';
+  }
+  $('#photo-overlay').addEventListener('click', closePhotoOverlay);
+
   document.addEventListener('keydown', function(e){
     if (e.key === 'Escape'){
+      if ($('#photo-overlay').classList.contains('open')){ closePhotoOverlay(); return; }
       closeDetail();
       closeEditModal();
       finderOverlay.classList.remove('open');
@@ -1897,7 +2213,12 @@
   }
 
   function saveStaples(text){
-    try{ window.localStorage.setItem(STAPLES_KEY, text); }catch(e){ /* best effort */ }
+    try{
+      if (window.localStorage.getItem(STAPLES_KEY) !== text){
+        window.localStorage.setItem(STAPLES_KEY, text);
+        touchPantry(); scheduleSync(); // batch 4
+      }
+    }catch(e){ /* best effort */ }
   }
 
   function loadPantry(){
@@ -1906,7 +2227,12 @@
   }
 
   function savePantry(text){
-    try{ window.localStorage.setItem(PANTRY_KEY, text); }catch(e){ /* best effort */ }
+    try{
+      if (window.localStorage.getItem(PANTRY_KEY) !== text){
+        window.localStorage.setItem(PANTRY_KEY, text);
+        touchPantry(); scheduleSync(); // batch 4
+      }
+    }catch(e){ /* best effort */ }
   }
 
   function ingredientChecklistHtml(statuses, optional){
@@ -2416,12 +2742,12 @@
     const t = est.totals;
     let totalsHtml = '<div class="nut-totals"><b>Whole recipe:</b> ' + Math.round(t.calories) + ' kcal · ' +
       round1(t.protein) + 'g protein · ' + round1(t.carbs) + 'g carbs · ' + round1(t.fat) + 'g fat';
-    if (est.perServing){
+    if (est.perServing && est.servings){
       const p = est.perServing;
-      totalsHtml += '<br><b>Per serving (' + recipe.servings + '):</b> ' + Math.round(p.calories) + ' kcal · ' +
+      totalsHtml += '<br><b>Per serving (' + est.servings + '):</b> ' + Math.round(p.calories) + ' kcal · ' +
         round1(p.protein) + 'g protein · ' + round1(p.carbs) + 'g carbs · ' + round1(p.fat) + 'g fat';
     } else {
-      totalsHtml += '<br><span class="hint" style="margin:0;">Set servings on this recipe to get per-serving values and save the estimate.</span>';
+      totalsHtml += '<br><span class="hint" style="margin:0;"><b>Enter servings above</b> to see per-serving values and enable “Save estimate to recipe”. The Save button stays off until then — it is not broken, it just has nothing per-serving to save yet.</span>';
     }
     totalsHtml += '</div>';
 
@@ -2437,10 +2763,27 @@
     saveBtn.disabled = !(est.perServing && est.counted > 0);
   }
 
+  // Per-serving values follow the servings input in the estimator panel:
+  // a recipe with no servings can be saved once the user enters one here.
+  function recomputePerServing(){
+    if (!currentEstimate) return;
+    const s = currentEstimate.servings;
+    if (typeof s === 'number' && s > 0){
+      const t = currentEstimate.totals;
+      currentEstimate.perServing = {
+        calories: t.calories / s, protein: t.protein / s,
+        carbs: t.carbs / s, fat: t.fat / s
+      };
+    } else {
+      currentEstimate.perServing = null;
+    }
+  }
+
   async function openNutritionEstimator(recipe){
     currentEstimate = null;
     nutritionOverlay.classList.add('open');
     $('#fdc-key').value = getFdcKey() === 'DEMO_KEY' ? '' : getFdcKey();
+    $('#nutrition-servings').value = (typeof recipe.servings === 'number' && recipe.servings > 0) ? recipe.servings : '';
     const content = $('#nutrition-content');
     content.innerHTML = '<div class="hint">Looking up ingredients…</div>';
     $('#nutrition-save').disabled = true;
@@ -2471,18 +2814,22 @@
       totals.fat += row.fat;
     });
 
-    const perServing = (typeof recipe.servings === 'number' && recipe.servings > 0)
-      ? {
-          calories: totals.calories / recipe.servings,
-          protein: totals.protein / recipe.servings,
-          carbs: totals.carbs / recipe.servings,
-          fat: totals.fat / recipe.servings
-        }
-      : null;
+    const servings = (typeof recipe.servings === 'number' && recipe.servings > 0) ? recipe.servings : null;
 
-    currentEstimate = { recipeId: recipe.id, rows: rows, totals: totals, perServing: perServing, counted: counted, total: rows.length };
+    currentEstimate = { recipeId: recipe.id, rows: rows, totals: totals, perServing: null, servings: servings, counted: counted, total: rows.length };
+    recomputePerServing();
     renderNutritionEstimate(recipe);
   }
+
+  // Servings typed in the panel recalculate per-serving on the fly and
+  // enable Save — no need to close the panel and edit the recipe first.
+  $('#nutrition-servings').addEventListener('input', function(){
+    if (!currentEstimate) return;
+    const n = parseInt(this.value, 10);
+    currentEstimate.servings = (n > 0) ? n : null;
+    recomputePerServing();
+    renderNutritionEstimate(recipes.find(function(x){ return x.id === currentEstimate.recipeId; }) || { servings: currentEstimate.servings });
+  });
 
   $('#nutrition-close').addEventListener('click', function(){ nutritionOverlay.classList.remove('open'); });
   nutritionOverlay.addEventListener('click', function(e){ if (e.target === nutritionOverlay) nutritionOverlay.classList.remove('open'); });
@@ -2493,21 +2840,32 @@
     showToast('Saved ingredient matches cleared');
   });
   $('#nutrition-save').addEventListener('click', async function(){
-    if (!currentEstimate || !currentEstimate.perServing) return;
+    if (!currentEstimate || !currentEstimate.perServing){
+      showToast('Enter servings above first — per-serving values are needed to save', 4000);
+      return;
+    }
     const r = recipes.find(function(x){ return x.id === currentEstimate.recipeId; });
     if (!r) return;
     const p = currentEstimate.perServing;
+    // Saving also sets the recipe's servings (from the panel), so the
+    // detail page shows the servings chip + scaler and the numbers match.
+    if (currentEstimate.servings) r.servings = currentEstimate.servings;
     r.nutrition = {
       calories: Math.round(p.calories),
       protein: round1(p.protein),
       carbs: round1(p.carbs),
       fat: round1(p.fat)
     };
+    r.updatedAt = Date.now(); // batch 4: a nutrition save is a sync change
     const ok = await persist();
     if (ok){
       nutritionOverlay.classList.remove('open');
       openDetail(r.id);
-      showToast('Nutrition estimate saved');
+      showToast('Nutrition estimate saved — ' + r.nutrition.calories + ' kcal per serving', 4500);
+    } else {
+      // persist() already toasts once; keep the panel open and say plainly
+      // that nothing was saved, so the user does not close it thinking it worked.
+      showToast("Couldn't save nutrition — try Backup to keep a JSON copy", 4500);
     }
   });
 
@@ -2529,6 +2887,382 @@
     currentSort = e.target.value;
     render();
   });
+
+
+  // =====================================================================
+  // Sync (batch 4) — phone + laptop, same recipes.
+  //
+  // Design: offline-first, one user, two devices.
+  // - IndexedDB on each device stays the local source of truth. The app
+  //   works fully offline; sync only copies changes across when online.
+  // - Backend: Viba's existing Supabase project (the blog's). One table,
+  //   plateful_sync (see schema.sql): one row per recipe + one pantry row.
+  //   Photos travel inside the recipe JSON as dataURLs (~150-250KB each),
+  //   one row at a time, so no Storage bucket is needed.
+  // - Auth: Supabase Auth, email + password, the same account as the blog
+  //   admin. Row Level Security allows ONLY a signed-in user to touch
+  //   their own rows (user_id = auth.uid()); anon gets nothing. No
+  //   service key, no secret, is ever in this file: the Project URL and
+  //   anon key are pasted once per device in the sync panel and saved in
+  //   localStorage, exactly like the USDA key. The password is never
+  //   stored — only the login session (tokens) is kept, on that device.
+  // - Merge: per-recipe last-write-wins on updatedAt (a millisecond
+  //   clock stamped on every save / cook / delete). A recipe edited on
+  //   both devices while offline keeps the newest version — the loser is
+  //   counted and reported, never duplicated. Deletes are tombstones:
+  //   a deleted recipe is a row with deleted=true, so the other device
+  //   deletes it too instead of resurrecting it on the next sync.
+  // - NOT synced: the nutrition cache (regenerable) and the USDA key
+  //   (per device). JSON backup/restore still works as a fallback.
+  // - This is raw REST (PostgREST + GoTrue), no Supabase JS library:
+  //   the file stays a single self-contained page with no extra CDN
+  //   dependency that could break offline use in the kitchen.
+  // =====================================================================
+  const SYNC_URL_KEY = 'plateful-sync-url';
+  const SYNC_ANON_KEY = 'plateful-sync-anon';
+  const SYNC_SESSION_KEY = 'plateful-sync-session';
+  const SYNC_TOMB_KEY = 'plateful-sync-tombstones';
+  const SYNC_LAST_KEY = 'plateful-sync-last';
+  const SYNC_PANTRY_AT_KEY = 'plateful-sync-pantry-at';
+  const SYNC_TABLE = 'plateful_sync';
+  const PANTRY_ROW_ID = '__pantry__';
+
+  let syncSession = null; // {access_token, refresh_token, expires_at, user:{id,email}}
+  let syncConfig = null;  // {url, anonKey}
+  let syncStatus = 'off'; // off | not-setup | signed-out | ready | syncing | offline | error
+  let syncLastAt = 0;
+  let syncLastError = '';
+  let syncInProgress = false;
+  let syncTimer = null;
+  let syncSuppressSchedule = false;
+
+  function lsGet(k){ try{ return window.localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k, v){ try{ window.localStorage.setItem(k, v); }catch(e){ /* best effort */ } }
+  function lsDel(k){ try{ window.localStorage.removeItem(k); }catch(e){ /* best effort */ } }
+
+  function loadSyncConfig(){
+    const url = lsGet(SYNC_URL_KEY), anon = lsGet(SYNC_ANON_KEY);
+    syncConfig = (url && anon) ? { url: url.replace(/\/+$/, ''), anonKey: anon } : null;
+    try{ syncSession = JSON.parse(lsGet(SYNC_SESSION_KEY) || 'null'); }catch(e){ syncSession = null; }
+    syncLastAt = parseInt(lsGet(SYNC_LAST_KEY) || '0', 10) || 0;
+  }
+  function saveSyncSession(s){
+    syncSession = s;
+    if (s) lsSet(SYNC_SESSION_KEY, JSON.stringify(s)); else lsDel(SYNC_SESSION_KEY);
+  }
+  function saveSyncConfig(url, anon){
+    if (url && anon){ lsSet(SYNC_URL_KEY, url); lsSet(SYNC_ANON_KEY, anon); syncConfig = { url: url.replace(/\/+$/, ''), anonKey: anon }; }
+    else { lsDel(SYNC_URL_KEY); lsDel(SYNC_ANON_KEY); syncConfig = null; }
+  }
+
+  function loadTombstones(){
+    try{ const a = JSON.parse(lsGet(SYNC_TOMB_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+    catch(e){ return []; }
+  }
+  function saveTombstones(list){ lsSet(SYNC_TOMB_KEY, JSON.stringify(list)); }
+  function addTombstone(id){
+    const list = loadTombstones();
+    if (!list.some(function(t){ return t.id === id; })) list.push({ id: id, deletedAt: Date.now() });
+    saveTombstones(list);
+  }
+  function removeTombstone(id){ saveTombstones(loadTombstones().filter(function(t){ return t.id !== id; })); }
+
+  function pantryUpdatedAt(){ return parseInt(lsGet(SYNC_PANTRY_AT_KEY) || '0', 10) || 0; }
+  function touchPantry(){ lsSet(SYNC_PANTRY_AT_KEY, String(Date.now())); }
+
+  function setSyncStatus(status, err){
+    syncStatus = status;
+    if (err !== undefined) syncLastError = err || '';
+    updateSyncPill();
+    refreshSyncPanel();
+  }
+
+  function syncStatusText(){
+    if (syncStatus === 'syncing') return 'Syncing…';
+    if (syncStatus === 'not-setup') return 'Sync not set up';
+    if (syncStatus === 'signed-out') return 'Sign in to sync';
+    if (syncStatus === 'offline') return 'Offline — will sync later';
+    if (syncStatus === 'error') return 'Sync failed — tap to retry';
+    if (syncStatus === 'ready') return syncLastAt ? ('Synced · ' + formatRelativeTime(syncLastAt)) : 'Ready to sync';
+    return 'Sync off';
+  }
+
+  function updateSyncPill(){
+    const el = $('#sync-status-text'); if (!el) return;
+    el.textContent = syncStatusText();
+    const dot = $('#sync-dot'); if (!dot) return;
+    dot.className = 'sync-dot' + (syncStatus === 'ready' ? ' ok' : (syncStatus === 'syncing' || syncStatus === 'offline' || syncStatus === 'not-setup' || syncStatus === 'signed-out' ? ' warn' : (syncStatus === 'error' ? ' bad' : '')));
+    dot.title = syncLastError || syncStatusText();
+  }
+
+  function refreshSyncPanel(){
+    const st = $('#sync-panel-status'); if (!st) return;
+    st.textContent = syncStatusText() + (syncLastError ? (' — ' + syncLastError) : '') +
+      (syncSession && syncSession.user && syncSession.user.email ? (' — signed in as ' + syncSession.user.email) : '');
+    const last = $('#sync-last');
+    if (last) last.textContent = syncLastAt ? ('Last synced ' + formatRelativeTime(syncLastAt) + '.') : 'Never synced on this device yet.';
+    const urlEl = $('#sync-url'), anonEl = $('#sync-anon'), emailEl = $('#sync-email');
+    if (urlEl && syncConfig) urlEl.value = syncConfig.url;
+    if (anonEl && syncConfig) anonEl.value = syncConfig.anonKey;
+    if (emailEl && syncSession && syncSession.user) emailEl.value = syncSession.user.email;
+  }
+
+  function openSyncPanel(){ refreshSyncPanel(); $('#sync-overlay').classList.add('open'); }
+  function closeSyncPanel(){ $('#sync-overlay').classList.remove('open'); }
+
+  async function syncAuthRequest(grant, body){
+    const res = await fetch(syncConfig.url + '/auth/v1/token?grant_type=' + grant, {
+      method: 'POST',
+      headers: { 'apikey': syncConfig.anonKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok){
+      let m = 'Sign-in failed (' + res.status + ')';
+      try{ const j = await res.json(); if (j.error_description) m = j.error_description; else if (j.msg) m = j.msg; else if (j.error) m = j.error; }catch(e){ /* keep default */ }
+      throw new Error(m);
+    }
+    return res.json();
+  }
+
+  async function syncSignIn(email, password){
+    const data = await syncAuthRequest('password', { email: email, password: password });
+    saveSyncSession({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + (data.expires_in || 3600) * 1000,
+      user: data.user ? { id: data.user.id, email: data.user.email } : { id: '', email: email }
+    });
+    setSyncStatus('ready');
+    return syncSession.user;
+  }
+
+  async function syncSignOut(){ saveSyncSession(null); setSyncStatus('signed-out'); }
+
+  async function syncRefreshSession(){
+    if (!syncSession || !syncSession.refresh_token) return null;
+    try{
+      const data = await syncAuthRequest('refresh_token', { refresh_token: syncSession.refresh_token });
+      saveSyncSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: Date.now() + (data.expires_in || 3600) * 1000,
+        user: data.user ? { id: data.user.id, email: data.user.email } : syncSession.user
+      });
+      return syncSession;
+    }catch(e){ saveSyncSession(null); return null; }
+  }
+
+  async function getSyncSession(){
+    if (!syncConfig || !syncSession) return null;
+    if (syncSession.expires_at && syncSession.expires_at > Date.now() + 60000) return syncSession;
+    return syncRefreshSession();
+  }
+
+  async function syncFetch(path, opts){
+    opts = opts || {};
+    let session = await getSyncSession();
+    if (!session) throw new Error('not-signed-in');
+    const headers = { 'apikey': syncConfig.anonKey, 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' };
+    if (opts.prefer) headers['Prefer'] = opts.prefer;
+    let res = await fetch(syncConfig.url + path, { method: opts.method || 'GET', headers: headers, body: opts.body });
+    if (res.status === 401){
+      session = await syncRefreshSession();
+      if (!session) throw new Error('not-signed-in');
+      headers['Authorization'] = 'Bearer ' + session.access_token;
+      res = await fetch(syncConfig.url + path, { method: opts.method || 'GET', headers: headers, body: opts.body });
+    }
+    return res;
+  }
+
+  async function fetchRemoteRows(){
+    const res = await syncFetch('/rest/v1/' + SYNC_TABLE + '?select=id,kind,data,updated_at,deleted&order=updated_at.asc&limit=1000');
+    if (!res.ok) throw new Error('Sync read failed (' + res.status + ') — check the table exists (schema.sql) and RLS allows your account.');
+    return res.json();
+  }
+
+  async function upsertRows(rows){
+    // Photos make rows large — push in small chunks, not one giant payload.
+    for (let i = 0; i < rows.length; i += 5){
+      const chunk = rows.slice(i, i + 5);
+      const res = await syncFetch('/rest/v1/' + SYNC_TABLE + '?on_conflict=user_id,id',
+        { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: JSON.stringify(chunk) });
+      if (!res.ok) throw new Error('Sync write failed (' + res.status + ') — check the table exists (schema.sql) and RLS allows your account.');
+    }
+  }
+
+  function rowForRecipe(r, userId){
+    return { user_id: userId, id: r.id, kind: 'recipe', data: r,
+      updated_at: new Date(r.updatedAt || r.createdAt || Date.now()).toISOString(), deleted: false };
+  }
+  function rowForTombstone(t, userId){
+    return { user_id: userId, id: t.id, kind: 'recipe', data: { id: t.id, deletedAt: t.deletedAt },
+      updated_at: new Date(t.deletedAt).toISOString(), deleted: true };
+  }
+  function rowForPantry(userId, at){
+    return { user_id: userId, id: PANTRY_ROW_ID, kind: 'pantry',
+      data: { staples: loadStaples(), pantryLast: loadPantry(), updatedAt: at },
+      updated_at: new Date(at).toISOString(), deleted: false };
+  }
+
+  async function syncNow(manual){
+    if (syncInProgress) return false;
+    if (!syncConfig){ setSyncStatus('not-setup'); if (manual) showToast('Set up sync first — tap the sync pill'); return false; }
+    const session = await getSyncSession();
+    if (!session){ setSyncStatus('signed-out'); if (manual) showToast('Sign in to sync first'); return false; }
+    if (!navigator.onLine){ setSyncStatus('offline'); if (manual) showToast('You are offline — changes are saved here and will sync later'); return false; }
+    syncInProgress = true;
+    setSyncStatus('syncing');
+    const lastSyncBefore = syncLastAt;
+    let changed = false, conflicts = 0;
+    try{
+      const remote = await fetchRemoteRows();
+      const remoteById = {};
+      remote.forEach(function(row){ remoteById[row.id] = row; });
+      const userId = session.user.id;
+      const toPush = [];
+      const tombstones = loadTombstones();
+
+      // Pantry (one row, whole-text last-write-wins)
+      const pantryRow = remoteById[PANTRY_ROW_ID];
+      const localPantryAt = pantryUpdatedAt();
+      if (pantryRow && !pantryRow.deleted){
+        const remoteAt = (pantryRow.data && pantryRow.data.updatedAt) || Date.parse(pantryRow.updated_at) || 0;
+        if (remoteAt > localPantryAt){
+          if (typeof pantryRow.data.staples === 'string') saveStaples(pantryRow.data.staples);
+          if (typeof pantryRow.data.pantryLast === 'string') savePantry(pantryRow.data.pantryLast);
+          lsSet(SYNC_PANTRY_AT_KEY, String(remoteAt));
+          changed = true;
+        } else if (localPantryAt > remoteAt){
+          toPush.push(rowForPantry(userId, localPantryAt));
+        }
+      } else if (localPantryAt > 0){
+        toPush.push(rowForPantry(userId, localPantryAt));
+      }
+
+      // Remote recipes: pull newer, push newer local, honour tombstones
+      remote.forEach(function(row){
+        if (row.kind !== 'recipe') return;
+        const remoteAt = (row.data && row.data.updatedAt) || Date.parse(row.updated_at) || 0;
+        const localIdx = recipes.findIndex(function(r){ return r.id === row.id; });
+        if (row.deleted){
+          const tombAt = (row.data && row.data.deletedAt) || remoteAt;
+          if (localIdx > -1){
+            const local = recipes[localIdx];
+            if (tombAt > (local.updatedAt || local.createdAt || 0)){
+              recipes.splice(localIdx, 1);
+              addTombstone(row.id);
+              changed = true;
+            } else {
+              toPush.push(rowForRecipe(local, userId));
+              removeTombstone(row.id);
+            }
+          } else if (!tombstones.some(function(t){ return t.id === row.id; })){
+            tombstones.push({ id: row.id, deletedAt: tombAt });
+            saveTombstones(tombstones);
+          }
+          return;
+        }
+        const remoteRec = normalizeRecipe(row.data || {});
+        if (localIdx === -1){
+          recipes.push(remoteRec);
+          removeTombstone(row.id);
+          changed = true;
+        } else {
+          const local = recipes[localIdx];
+          if (remoteAt > (local.updatedAt || 0)){
+            // Both sides changed since the last sync = a real conflict;
+            // newest wins, and we say so instead of silently dropping one.
+            if ((local.updatedAt || 0) > lastSyncBefore && remoteAt > lastSyncBefore) conflicts++;
+            recipes[localIdx] = remoteRec;
+            changed = true;
+          } else if ((local.updatedAt || 0) > remoteAt){
+            toPush.push(rowForRecipe(local, userId));
+          }
+        }
+      });
+
+      // Local recipes the server has never seen
+      recipes.forEach(function(r){ if (!remoteById[r.id]) toPush.push(rowForRecipe(r, userId)); });
+      // Local tombstones the server has never seen (or not as deleted)
+      tombstones.forEach(function(t){
+        const row = remoteById[t.id];
+        if (!row || !row.deleted) toPush.push(rowForTombstone(t, userId));
+      });
+
+      if (toPush.length) await upsertRows(toPush);
+      if (changed){
+        syncSuppressSchedule = true;
+        try{ await persist(); }finally{ syncSuppressSchedule = false; }
+        render();
+      }
+      syncLastAt = Date.now();
+      lsSet(SYNC_LAST_KEY, String(syncLastAt));
+      setSyncStatus('ready');
+      if (manual) showToast(conflicts ? ('Synced — kept the newest version of ' + conflicts + ' recipe' + (conflicts === 1 ? '' : 's') + ' (edited on both devices)') : 'Synced');
+      return true;
+    }catch(e){
+      if (e && e.message === 'not-signed-in'){ setSyncStatus('signed-out'); }
+      else if (!navigator.onLine){ setSyncStatus('offline'); }
+      else { setSyncStatus('error', e && e.message ? e.message : 'unknown error'); }
+      if (manual) showToast('Sync failed: ' + (e && e.message ? e.message : 'check connection'));
+      return false;
+    }finally{
+      syncInProgress = false;
+      updateSyncPill();
+      refreshSyncPanel();
+    }
+  }
+
+  function scheduleSync(){
+    if (syncSuppressSchedule || syncInProgress || !syncConfig || !syncSession) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(function(){ syncNow(false); }, 2000);
+  }
+
+  function initSync(){
+    loadSyncConfig();
+    if (!syncConfig) setSyncStatus('not-setup');
+    else if (!syncSession) setSyncStatus('signed-out');
+    else setSyncStatus('ready');
+    updateSyncPill();
+    window.addEventListener('online', function(){ syncNow(false); });
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden && syncSession && syncConfig && Date.now() - syncLastAt > 15 * 60 * 1000) syncNow(false);
+    });
+    if (syncConfig && syncSession) setTimeout(function(){ syncNow(false); }, 1500);
+  }
+
+  // Sync panel wiring
+  $('#sync-btn').addEventListener('click', openSyncPanel);
+  $('#sync-close').addEventListener('click', closeSyncPanel);
+  $('#sync-overlay').addEventListener('click', function(e){ if (e.target === $('#sync-overlay')) closeSyncPanel(); });
+  $('#sync-signin').addEventListener('click', async function(){
+    const url = $('#sync-url').value.trim(), anon = $('#sync-anon').value.trim();
+    const email = $('#sync-email').value.trim(), password = $('#sync-password').value;
+    if (!url || !anon){ showToast('Paste the Supabase URL and anon key first'); return; }
+    if (!email || !password){ showToast('Enter your Supabase email and password'); return; }
+    saveSyncConfig(url, anon);
+    const btn = $('#sync-signin'); btn.disabled = true; btn.textContent = 'Signing in…';
+    try{
+      await syncSignIn(email, password);
+      $('#sync-password').value = '';
+      showToast('Signed in — syncing');
+      refreshSyncPanel();
+      await syncNow(true);
+      closeSyncPanel(); // success: get out of the way, the pill shows the status
+    }catch(e){
+      showToast('Sign-in failed: ' + (e && e.message ? e.message : 'check your details'));
+      setSyncStatus('signed-out');
+    }finally{
+      btn.disabled = false; btn.textContent = 'Sign in';
+    }
+  });
+  $('#sync-signout').addEventListener('click', async function(){
+    await syncSignOut();
+    showToast('Signed out — your recipes stay on this device');
+    refreshSyncPanel();
+  });
+  $('#sync-now').addEventListener('click', async function(){ await syncNow(true); });
 
   // ---------- Backup / Restore ----------
   $('#backup-btn').addEventListener('click', function(){
@@ -2566,7 +3300,7 @@
           if (idx > -1){ recipes[idx] = r; updated++; }
           else { recipes.push(r); added++; }
         });
-        await persist();
+        await persist(); // persist() already schedules a sync (batch 4)
         render();
         showToast('Restored: ' + added + ' added, ' + updated + ' updated');
       }catch(err){
@@ -2586,6 +3320,7 @@
     $('#storage-banner').style.display = storageMode === 'memory' ? 'block' : 'none';
     recipes = (await loadRecipes()).map(normalizeRecipe);
     render();
+    initSync(); // batch 4: load sync config, show status, auto-sync if signed in
   })();
 })();
 </script>
