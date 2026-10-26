@@ -447,7 +447,9 @@
   }
 
   /* Detail view */
-  #detail-image-wrap{ aspect-ratio:auto; height:340px; overflow:hidden; }
+  /* Detail photo: a cute regular-sized rectangle, centered — not full width.
+     640px wide max, 4/3, capped at 420px tall (cover-crops the rest). */
+  #detail-image-wrap{ width:min(640px, 100%); aspect-ratio:4/3; max-height:420px; overflow:hidden; margin:0 auto 22px; }
   .detail-image{ width:100%; height:100%; object-fit:cover; display:block; }
   .detail-image-placeholder{ width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
   .detail-image-placeholder .icon{ width:44px; height:44px; opacity:0.5; }
@@ -606,6 +608,22 @@
     margin:16px 0 6px; font-size:0.92rem; line-height:1.7; color:var(--ink); background:var(--card-soft);
   }
 
+  /* ---------- Barcode scanner + brand pantry (batch 5) ---------- */
+  .barcode-video-wrap{ position:relative; width:100%; max-width:480px; margin:0 auto 12px; border-radius:14px; overflow:hidden; background:#111; display:none; }
+  .barcode-video-wrap.open{ display:block; }
+  .barcode-video-wrap video{ width:100%; display:block; }
+  .barcode-frame{ position:absolute; left:12%; right:12%; top:50%; height:84px; margin-top:-42px; border:3px solid #E8C468; border-radius:10px; pointer-events:none; }
+  .barcode-frame::after{ content:'Line the barcode up inside the frame'; position:absolute; left:50%; top:calc(100% + 8px); transform:translateX(-50%); color:#fff; font-size:0.78rem; white-space:nowrap; text-shadow:0 1px 3px rgba(0,0,0,0.7); }
+  .brand-item{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line-card); font-size:0.88rem; }
+  .brand-item .brand-meta{ color:var(--ink-soft); font-size:0.8rem; line-height:1.5; }
+  .brand-item .brand-remove{ background:none; border:none; color:var(--dessert); font-weight:700; padding:2px 6px; flex:none; }
+  .off-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 12px; }
+  @media (max-width:720px){ .off-form-grid{ grid-template-columns:1fr; } }
+  /* (batch 5) The Scan button deliberately does NOT live in the header:
+     on a phone it wrapped the controls row onto an extra line (+46px) and
+     pushed the recipe detail down. It lives in the nutrition estimator
+     and in the Cook Finder pantry panel instead. */
+
 
   /* ---------- Full-page recipe view (Layout A, batch 3) ---------- */
   .detail-page{ animation:rise 0.3s ease forwards; }
@@ -619,7 +637,7 @@
   .detail-meta{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
   .detail-meta span{ background:#fff; border:1px solid var(--line-card); border-radius:999px; padding:7px 13px; font-size:0.83rem; font-weight:600; color:var(--ink); }
   .detail-meta span.cat{ background:var(--meal); color:#fff; border-color:var(--meal); }
-  .detail-hero{ aspect-ratio:auto; height:340px; overflow:hidden; border-radius:16px; margin-bottom:22px; background:var(--card-soft); cursor:zoom-in; }
+  .detail-hero{ width:min(640px, 100%); aspect-ratio:4/3; max-height:420px; overflow:hidden; border-radius:16px; margin:0 auto 22px; background:var(--card-soft); cursor:zoom-in; }
   .detail-hero img{ width:100%; height:100%; object-fit:cover; display:block; }
   /* Tap the capped hero to see the full photo (in-app overlay, works for
      dataURL photos where window.open is blocked). */
@@ -641,8 +659,8 @@
   @media (max-width:720px){
     .detail-grid{ grid-template-columns:1fr; }
     .detail-title{ font-size:1.9rem; }
-    .detail-hero{ aspect-ratio:auto; height:200px; }
-    #detail-image-wrap{ height:200px; }
+    .detail-hero{ aspect-ratio:4/3; max-height:240px; }
+    #detail-image-wrap{ max-height:240px; }
   }
 
   /* ---------- Sync (batch 4) ---------- */
@@ -853,6 +871,7 @@
         <label>Pantry ingredients</label>
         <textarea class="plain-area" id="finder-pantry" placeholder="chicken thighs, garlic, rice, soy sauce..." style="min-height:70px;"></textarea>
         <div class="hint">Comma or line separated. Leave blank to ignore.</div>
+        <button type="button" class="btn-secondary" id="finder-scan-btn" style="margin-top:8px;">Scan a barcode — save a packet to your brand pantry</button>
       </div>
       <div class="field">
         <label>Minutes available</label>
@@ -890,7 +909,8 @@
     </button>
     <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
       <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Nutrition estimate</h2>
-      <p class="finder-intro">Estimated from this recipe's ingredients using USDA FoodData Central (generic foods). Indian spices, ghee, ginger-garlic paste and plain Greek yoghurt use a built-in table with correct gram weights, so they are never matched to the wrong food. Other amounts are converted to grams where the database knows the portion, or with a standard tablespoon/teaspoon weight where it doesn't. It's a close estimate, not lab values — branded products vary, which is why your typed-in nutrition always wins unless you save an estimate over it.</p>
+      <p class="finder-intro">Estimated from this recipe's ingredients. <b>Scanned brands win first</b> — if an ingredient matches something in your brand pantry (scanned from its packet), its label values are used and the line says so. Then the built-in table (Indian spices, ghee, ginger-garlic paste, plain Greek yoghurt, plain chicken breast), then USDA FoodData Central for the rest. Other amounts are converted to grams where the database knows the portion, or with a standard tablespoon/teaspoon weight where it doesn't. It's a close estimate, not lab values — branded products vary, which is why your typed-in nutrition always wins unless you save an estimate over it.</p>
+      <button type="button" class="btn-secondary" id="nutrition-scan-btn" style="margin-bottom:14px;">Scan a barcode for this recipe</button>
       <div class="field">
         <label>USDA API key (free)</label>
         <input type="text" class="plain-input" id="fdc-key" placeholder="Paste your free key — or leave blank to use the shared demo key">
@@ -927,7 +947,7 @@
       <div class="field">
         <label>Supabase anon key</label>
         <input type="password" class="plain-input" id="sync-anon" placeholder="Paste the anon public key" autocomplete="off">
-        <div class="hint">Saved on this device only, like your USDA key — never in the code or the repo. Supabase dashboard → Settings → API → Project URL + anon public key.</div>
+        <div class="hint">Saved on this device only, like your USDA key — never in the code or the repo. Supabase dashboard → Settings → API → Project URL + anon public key. Paste the Project URL exactly as https://xxxx.supabase.co — with nothing after it, no /rest/v1, no /auth/v1.</div>
       </div>
       <div class="field">
         <label>Email (your Supabase Auth account)</label>
@@ -954,6 +974,59 @@
         </ol>
         <div class="hint">Photos sync inside the recipe (no Storage bucket needed). The nutrition cache and your USDA key stay on each device. JSON backup/restore still works as a fallback.</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Barcode scanner + brand pantry (batch 5) -->
+<div class="overlay" id="barcode-overlay">
+  <div class="panel" style="max-width:620px;">
+    <button class="panel-close" id="barcode-close" aria-label="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
+      <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Scan a barcode</h2>
+      <p class="finder-intro">Scan a packet and save its label nutrition into your <b>brand pantry</b>. When a recipe ingredient matches a scanned brand, the estimator uses that brand's numbers instead of the generic table or USDA — scanned brand &gt; built-in table &gt; USDA.</p>
+      <p class="hint" style="margin:0 0 14px;">Open Food Facts is crowdsourced — strongest in France/Europe, thinner for US and Indian items, and some packets simply aren't in it yet. Data can be incomplete or out of date; <b>the label wins</b>, especially for allergens.</p>
+      <div class="field">
+        <label>Barcode (type it, or scan with the camera)</label>
+        <div class="field-row" style="margin-bottom:0;">
+          <input type="text" inputmode="numeric" class="plain-input" id="barcode-input" placeholder="e.g. 3017624010701" autocomplete="off" style="flex:1;">
+          <button type="button" class="btn-primary" id="barcode-lookup">Look up</button>
+        </div>
+        <div class="hint">Works without a camera — typing the digits runs the same lookup and save flow.</div>
+      </div>
+      <div class="field">
+        <button type="button" class="btn-secondary" id="barcode-scan-btn">Scan with camera</button>
+        <button type="button" class="btn-secondary" id="barcode-stop-btn" style="display:none;">Stop camera</button>
+        <div class="hint" id="barcode-scan-hint">Camera needs the scanner library (loaded on demand from jsDelivr) and camera permission. If either fails, typing the barcode above still works.</div>
+      </div>
+      <div class="barcode-video-wrap" id="barcode-video-wrap">
+        <video id="barcode-video" playsinline muted></video>
+        <div class="barcode-frame"></div>
+      </div>
+      <div id="barcode-result"></div>
+      <div id="barcode-add-form" style="display:none;">
+        <h3 style="font-family:var(--font-display); margin:18px 0 6px;">Add this product to Open Food Facts</h3>
+        <p class="hint">Not in Open Food Facts yet — or its nutrition is missing. Fill in the label values and it goes to Open Food Facts <b>and</b> into your brand pantry at the same time, so you can use it straight away with no wait for indexing. <b>What you add to Open Food Facts is public and editable by others (ODbL licence)</b> — your local Plateful copy stays your source of truth. Photos are not uploaded from here.</p>
+        <div class="off-form-grid">
+          <div class="field"><label>Product name</label><input type="text" class="plain-input" id="off-name"></div>
+          <div class="field"><label>Brand</label><input type="text" class="plain-input" id="off-brand"></div>
+          <div class="field"><label>Quantity (as on the pack)</label><input type="text" class="plain-input" id="off-quantity" placeholder="e.g. 400 g"></div>
+          <div class="field"><label>Calories per 100 g (kcal)</label><input type="number" min="0" step="0.1" class="plain-input" id="off-calories"></div>
+          <div class="field"><label>Protein per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="off-protein"></div>
+          <div class="field"><label>Carbs per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="off-carbs"></div>
+          <div class="field"><label>Fat per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="off-fat"></div>
+          <div class="field"><label>Open Food Facts username (not your email)</label><input type="text" class="plain-input" id="off-user" autocomplete="username"></div>
+          <div class="field"><label>Open Food Facts password</label><input type="password" class="plain-input" id="off-password" autocomplete="current-password"></div>
+        </div>
+        <div class="hint">Your Open Food Facts login is saved on this device only, like your USDA key — never in the code or the repo. You need a free Open Food Facts account to add products (make one in the Open Food Facts app).</div>
+        <button type="button" class="btn-primary" id="off-submit" style="width:100%;">Save to my pantry &amp; add to Open Food Facts</button>
+        <button type="button" class="btn-secondary" id="off-save-local" style="width:100%; margin-top:8px;">Save to my pantry only (skip Open Food Facts)</button>
+      </div>
+      <h3 style="font-family:var(--font-display); margin:22px 0 6px;">Your brand pantry</h3>
+      <div id="brand-pantry-list"><div class="hint">Nothing scanned yet.</div></div>
+      <p class="hint">Scanned brands sync between phone and laptop with the rest of your pantry, when you're signed in. Your Open Food Facts login and USDA key do not sync — they stay per device.</p>
     </div>
   </div>
 </div>
@@ -1948,8 +2021,8 @@
       renderDetailIngredients(r);
     });
 
-    // Tap the hero photo to see the full photo (hero is capped at 340px,
-    // so the whole dish is a tap away without a giant image).
+    // Tap the hero photo to see the full photo (hero is a 640px-wide
+    // rectangle, so the whole dish is a tap away without a giant image).
     const heroWrap = $('#detail-image-wrap');
     if (heroWrap && r.image) heroWrap.addEventListener('click', function(){ openPhotoOverlay(r.image); });
 
@@ -2403,7 +2476,7 @@
   // is only ever fetched once, and repeat estimates work offline.
   const nutritionOverlay = $('#nutrition-overlay');
   const FDC_KEY_STORAGE = 'fdc-api-key';
-  const NUTRITION_CACHE_KEY = 'nutrition-cache-v2'; // batch 3: v1 held the bad Indian-spice matches, so it is not reused
+  const NUTRITION_CACHE_KEY = 'nutrition-cache-v3'; // v2 held the bad breaded-chicken match (263 kcal/100g), so it is not reused; the load-time purge below still runs for any cache a newer build writes
   let nutritionCache = null;
   let currentEstimate = null;
 
@@ -2428,13 +2501,18 @@
       try{ nutritionCache = JSON.parse(window.localStorage.getItem(NUTRITION_CACHE_KEY) || '{}'); }
       catch(e){ nutritionCache = {}; }
     }
-    // Purge any cached match that the batch-3 filter would reject (belt and
-    // braces: the v2 key already starts fresh, this also cleans a v2 cache
-    // written by an older build of this file).
+    // Purge any cached match that the filter would reject (belt and
+    // braces: the v3 key already starts fresh, this also cleans a v3 cache
+    // written by an older build of this file — e.g. a breaded-chicken
+    // match cached before the coated-words filter existed). The purge
+    // must be SAVED here: without this, a purged entry silently comes
+    // back on the next page load whenever nothing else saves the cache.
+    let purged = 0;
     Object.keys(nutritionCache).forEach(function(k){
       const f = nutritionCache[k];
-      if (f && f.description && isBadMatch(k, f.description)) delete nutritionCache[k];
+      if (f && f.description && isBadMatch(k, f.description)){ delete nutritionCache[k]; purged++; }
     });
+    if (purged) await saveNutritionCache();
     return nutritionCache;
   }
 
@@ -2442,6 +2520,59 @@
     if (!nutritionCache) return;
     if (storageMode === 'idb'){ await idbSet(NUTRITION_CACHE_KEY, nutritionCache); return; }
     try{ window.localStorage.setItem(NUTRITION_CACHE_KEY, JSON.stringify(nutritionCache)); }catch(e){ /* best effort */ }
+  }
+
+  // ---------- Brand pantry (batch 5) ----------
+  // Scanned packets, saved locally in IndexedDB (same store as recipes),
+  // with a localStorage fallback. One item per barcode; the estimator uses
+  // these label values before the override table and USDA. They sync as
+  // part of the existing pantry row (see rowForPantry) — no second sync
+  // system, no schema change: the pantry row's data is jsonb.
+  const BRAND_PANTRY_KEY = 'brand-pantry-data';
+  let brandPantry = [];
+  function normalizeBrandItem(raw){
+    if (!raw || typeof raw !== 'object') return null;
+    const pg = raw.per100g || {};
+    if (typeof pg.calories !== 'number') return null;
+    return {
+      barcode: String(raw.barcode || ''),
+      name: String(raw.name || 'Unnamed product'),
+      brand: String(raw.brand || ''),
+      quantity: String(raw.quantity || ''),
+      per100g: { calories: pg.calories, protein: (typeof pg.protein === 'number' ? pg.protein : null), carbs: (typeof pg.carbs === 'number' ? pg.carbs : null), fat: (typeof pg.fat === 'number' ? pg.fat : null) },
+      perServing: (raw.perServing && typeof raw.perServing === 'object') ? raw.perServing : null,
+      source: raw.source || 'off',
+      savedAt: (typeof raw.savedAt === 'number' ? raw.savedAt : Date.now()),
+      updatedAt: (typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now())
+    };
+  }
+  async function loadBrandPantry(){
+    let v;
+    if (storageMode === 'idb') v = await idbGet(BRAND_PANTRY_KEY);
+    else { try{ v = JSON.parse(window.localStorage.getItem(BRAND_PANTRY_KEY) || 'null'); }catch(e){ v = null; } }
+    brandPantry = Array.isArray(v) ? v.map(normalizeBrandItem).filter(Boolean) : [];
+    return brandPantry;
+  }
+  async function saveBrandPantryLocal(){
+    if (storageMode === 'idb') await idbSet(BRAND_PANTRY_KEY, brandPantry);
+    else { try{ window.localStorage.setItem(BRAND_PANTRY_KEY, JSON.stringify(brandPantry)); }catch(e){ /* best effort */ } }
+  }
+  async function saveBrandPantry(){
+    await saveBrandPantryLocal();
+    touchPantry(); // brand pantry rides the pantry sync row — a change is a pantry change
+    scheduleSync();
+  }
+  function upsertBrandItem(item){
+    const norm = normalizeBrandItem(item);
+    if (!norm) return null;
+    const idx = brandPantry.findIndex(function(x){ return x.barcode && norm.barcode && x.barcode === norm.barcode; });
+    if (idx > -1) brandPantry[idx] = norm; else brandPantry.push(norm);
+    return norm;
+  }
+  async function removeBrandItem(barcode){
+    brandPantry = brandPantry.filter(function(x){ return x.barcode !== barcode; });
+    await saveBrandPantry();
+    renderBrandPantryList();
   }
 
   // gram weights for the units the parser can produce
@@ -2505,6 +2636,12 @@
   const NUTRITION_OVERRIDES = [
     // per-100g values are USDA SR Legacy / Foundation values where they
     // exist; "local estimate" rows are labelled as such in the description.
+    // Plain chicken breast: USDA search returns "Chicken breast tenders,
+    // breaded, uncooked" first (263 kcal/100g) for a plain-chicken query,
+    // so plain breast never goes to search — 165 kcal/100g, raw boneless
+    // skinless (USDA SR Legacy). notIf: a breaded/battered/fried/coated/
+    // crispy query must NOT get the plain values; it goes to USDA instead.
+    { keys: ['chicken breast', 'boneless chicken breast', 'chicken breast, boneless, skinless'], desc: 'Chicken, broilers or fryers, breast, meat only, raw', per100g: { calories: 165, protein: 31, carbs: 0, fat: 3.6 }, notIf: ['breaded', 'battered', 'fried', 'coated', 'crispy'] },
     { keys: ['salt'], desc: 'Salt, table', per100g: { calories: 0, protein: 0, carbs: 0, fat: 0 }, grams: { tablespoon: 18, teaspoon: 6, cup: 288 } },
     { keys: ['chilli powder', 'chili powder', 'kashmiri chilli', 'kashmiri chili', 'chilli flakes', 'chili flakes'], desc: 'Spices, chili powder', per100g: { calories: 282, protein: 13.5, carbs: 49.9, fat: 14.3 }, grams: { tablespoon: 8, teaspoon: 2.7, cup: 128 } },
     { keys: ['garam masala'], desc: 'Spices, garam masala (local estimate)', per100g: { calories: 325, protein: 12, carbs: 55, fat: 14 }, grams: { tablespoon: 7, teaspoon: 2.3, cup: 112 } },
@@ -2536,9 +2673,18 @@
     return String(text || '').toLowerCase().replace(/yoghurt/g, 'yogurt').replace(/chilli/g, 'chili').replace(/[^a-z0-9\s-]/g, ' ').replace(/\s+/g, ' ').trim();
   }
   function findOverride(core, raw){
-    const hay = normKey(core) + ' ' + normKey(raw);
+    // Include the typo-corrected query in the haystack: "chicken brest"
+    // (her pasted typo) must still match the "chicken breast" override.
+    const hay = normKey(core) + ' ' + normKey(correctQuery(core)) + ' ' + normKey(raw);
     for (let i = 0; i < NUTRITION_OVERRIDES.length; i++){
       const o = NUTRITION_OVERRIDES[i];
+      let excluded = false;
+      if (o.notIf){
+        for (let k = 0; k < o.notIf.length; k++){
+          if (hay.indexOf(o.notIf[k]) > -1){ excluded = true; break; }
+        }
+      }
+      if (excluded) continue; // e.g. breaded chicken must not get plain-chicken values
       for (let j = 0; j < o.keys.length; j++){
         if (hay.indexOf(normKey(o.keys[j])) > -1) return o;
       }
@@ -2561,11 +2707,18 @@
   // the exact bad matches Viba pasted on Oct 25, generalised: a spice/paste/
   // dairy query must never come back as a fruit powder, a soup, a leafy
   // green from another plant, a nut paste, or a flavoured/branded yoghurt.
+  // And a plain food must never come back breaded/battered/fried/coated/
+  // crispy — "Chicken breast tenders, breaded, uncooked" for a plain
+  // chicken-breast query is the same trap (263 vs 165 kcal/100g).
   const BAD_MATCH_TOKENS = ['baobab', 'smart soup', 'drumstick', 'moringa', 'almond paste'];
+  const COATED_WORDS = ['breaded', 'battered', 'fried', 'coated', 'crispy'];
   function isBadMatch(core, desc){
     const c = normKey(core), d = String(desc || '').toLowerCase();
     for (let i = 0; i < BAD_MATCH_TOKENS.length; i++){
       if (d.indexOf(BAD_MATCH_TOKENS[i]) > -1 && c.indexOf(BAD_MATCH_TOKENS[i]) === -1) return true;
+    }
+    for (let i = 0; i < COATED_WORDS.length; i++){
+      if (d.indexOf(COATED_WORDS[i]) > -1 && c.indexOf(COATED_WORDS[i]) === -1) return true;
     }
     if (d.indexOf('soup') > -1 && /chili|chilli|garam|masala|turmeric|cumin|coriander|cilantro|spice/.test(c)) return true;
     if ((c.indexOf('yogurt') > -1 || c.indexOf('yoghurt') > -1) &&
@@ -2590,6 +2743,87 @@
     if (unit === 'tablespoon' || unit === 'tbsp') return entry.grams.teaspoon ? entry.grams.teaspoon * 3 * q : null;
     if (VOLUME_TSP[unit]) return genericGramsFor(unit, parsed.ingredient, parsed.raw);
     return null;
+  }
+  // ---------- Brand pantry matching (batch 5, pure — inside TESTABLE) ----------
+  // A scanned brand wins over the override table and USDA, but only when
+  // the ingredient really is that product: token overlap on the ingredient
+  // name, not a substring guess. Generic words (plain, whole, milk) do not
+  // count as a match on their own.
+  const BRAND_STOPWORDS = ['plain', 'whole', 'milk', 'fresh', 'raw', 'the', 'and', 'of', 'a', 'an'];
+  function brandTokens(text){
+    return normKey(text).split(' ').filter(function(w){ return w && BRAND_STOPWORDS.indexOf(w) === -1; });
+  }
+  function findBrandMatch(core, raw, items){
+    if (!items || !items.length) return null;
+    const coreToks = brandTokens(core);
+    const rawToks = brandTokens(raw);
+    let best = null, bestScore = 0;
+    for (let i = 0; i < items.length; i++){
+      const it = items[i];
+      if (!it || !it.per100g || it.per100g.calories == null) continue;
+      const nameToks = brandTokens((it.name || '') + ' ' + (it.brand || ''));
+      if (!nameToks.length) continue;
+      // Shared tokens with the ingredient core (preferred), else the raw line.
+      let shared = 0;
+      nameToks.forEach(function(t){ if (coreToks.indexOf(t) > -1) shared++; });
+      let toks = coreToks, s = shared;
+      if (s === 0){
+        nameToks.forEach(function(t){ if (rawToks.indexOf(t) > -1) s++; });
+        toks = rawToks;
+      }
+      if (s === 0) continue;
+      // At least 2 shared tokens, or 1 long distinctive token for a
+      // single-word product (e.g. "nutella", "paneer").
+      const distinctive = (s === 1 && nameToks.some(function(t){ return t.length >= 6 && toks.indexOf(t) > -1; }));
+      if (s < 2 && !distinctive) continue;
+      // The brand name must not be a small subset of a longer, different
+      // ingredient: e.g. brand "Greek Yogurt" must not match "greek yoghurt
+      // cake mix" — require most of the brand name to be present, AND
+      // most of the ingredient to be the brand (shared / ingredient
+      // tokens must be over half, so "greek yoghurt cake mix" at 2/4
+      // does not steal the scanned yoghurt).
+      const coverage = s / nameToks.length;
+      if (coverage < 0.5) continue;
+      if (s / toks.length <= 0.5) continue;
+      const score = s + coverage;
+      if (score > bestScore){ bestScore = score; best = it; }
+    }
+    return best;
+  }
+  function brandGramsFor(parsed, item){
+    const q = parsed.quantity;
+    if (q == null) return null;
+    const unit = parsed.unit;
+    if (!unit) return null;
+    if (WEIGHT_GRAMS[unit]) return WEIGHT_GRAMS[unit] * q;
+    const alias = UNIT_ALIASES[unit] || unit;
+    if (alias === 'gram' || alias === 'kilogram' || alias === 'ounce' || alias === 'pound') return WEIGHT_GRAMS[alias] * q;
+    if (VOLUME_TSP[unit]){ const g = genericGramsFor(unit, parsed.ingredient, parsed.raw); return (g != null) ? g * q : null; }
+    return null;
+  }
+  // Parse an Open Food Facts v2 product into a brand-pantry item. Only
+  // per-100g nutriments are used (never per-serving or per-product values,
+  // which are a different basis). Energy may be kJ (energy_100g) — convert
+  // to kcal. Returns null when there is no usable per-100g energy at all.
+  function parseOffProduct(product, barcode){
+    if (!product || typeof product !== 'object') return null;
+    const n = product.nutriments || {};
+    function num(v){ const x = parseFloat(v); return (isNaN(x) || x == null) ? null : x; }
+    let kcal = num(n['energy-kcal_100g']);
+    if (kcal == null && num(n.energy_100g) != null) kcal = num(n.energy_100g) / 4.184;
+    if (kcal == null) return null;
+    const per100g = { calories: Math.round(kcal * 10) / 10, protein: num(n.proteins_100g), carbs: num(n.carbohydrates_100g), fat: num(n.fat_100g) };
+    const perServing = (num(n['energy-kcal_serving']) != null) ? { calories: num(n['energy-kcal_serving']), protein: num(n.proteins_serving), carbs: num(n.carbohydrates_serving), fat: num(n.fat_serving) } : null;
+    return {
+      barcode: String(barcode || product.code || ''),
+      name: String(product.product_name || product.product_name_en || 'Unnamed product'),
+      brand: String(product.brands || ''),
+      quantity: String(product.quantity || product.serving_size || ''),
+      per100g: per100g,
+      perServing: perServing,
+      source: 'off',
+      savedAt: Date.now(), updatedAt: Date.now()
+    };
   }
   /* TESTABLE_END */
 
@@ -2677,7 +2911,29 @@
   }
 
   async function resolveIngredient(parsed){
-    // 1. Local override first: Indian spices/pastes/dairy never go to USDA
+    // 0. Scanned brand first (batch 5): a packet's label values beat the
+    //    generic override table and USDA — but only when the brand really
+    //    matches the ingredient (findBrandMatch) AND the amount converts
+    //    to grams. If it does not convert, fall through to the override /
+    //    USDA instead of returning a "no-amount" dead end.
+    const brand = findBrandMatch(parsed.ingredient, parsed.raw, brandPantry);
+    if (brand){
+      const grams = brandGramsFor(parsed, brand);
+      if (grams != null){
+        const f = grams / 100;
+        const pg = brand.per100g;
+        return {
+          status: 'ok', source: 'brand', brandName: brand.name, brandBrand: brand.brand,
+          food: { description: brand.name + (brand.brand ? ' (' + brand.brand + ')' : ''), per100g: pg },
+          core: parsed.alternatives[0], grams: grams,
+          calories: (pg.calories != null ? pg.calories : 0) * f,
+          protein: (pg.protein != null ? pg.protein : 0) * f,
+          carbs: (pg.carbs != null ? pg.carbs : 0) * f,
+          fat: (pg.fat != null ? pg.fat : 0) * f
+        };
+      }
+    }
+    // 1. Local override next: Indian spices/pastes/dairy never go to USDA
     //    search at all, so they can never come back as Baobab / soup / etc.
     const override = findOverride(parsed.ingredient, parsed.raw);
     if (override){
@@ -2725,6 +2981,7 @@
       let meta;
       if (row.status === 'ok'){
         meta = '<b>' + Math.round(row.calories) + ' kcal</b><br>≈' + Math.round(row.grams) + ' g · ' + escapeHtml(row.food.description);
+        if (row.source === 'brand') meta += '<br>using scanned brand: ' + escapeHtml(row.brandName + (row.brandBrand ? ' (' + row.brandBrand + ')' : ''));
       } else if (row.status === 'not-found'){
         meta = 'not in USDA — skipped';
       } else if (row.status === 'no-amount'){
@@ -2940,9 +3197,18 @@
   function lsSet(k, v){ try{ window.localStorage.setItem(k, v); }catch(e){ /* best effort */ } }
   function lsDel(k){ try{ window.localStorage.removeItem(k); }catch(e){ /* best effort */ } }
 
+  // The Supabase dashboard's "API URL" ends in /rest/v1 and its Auth URL in
+  // /auth/v1 — pasting either as the Project URL makes auth 404, because
+  // this app appends /auth/v1 and /rest/v1 itself. Strip any such trailing
+  // path so the stored URL is always the bare project URL.
+  function normalizeSyncUrl(u){
+    let s = String(u || '').trim().replace(/\/+$/, '');
+    s = s.replace(/\/(rest\/v1|auth\/v1)(\/.*)?$/i, '');
+    return s.replace(/\/+$/, '');
+  }
   function loadSyncConfig(){
     const url = lsGet(SYNC_URL_KEY), anon = lsGet(SYNC_ANON_KEY);
-    syncConfig = (url && anon) ? { url: url.replace(/\/+$/, ''), anonKey: anon } : null;
+    syncConfig = (url && anon) ? { url: normalizeSyncUrl(url), anonKey: anon } : null;
     try{ syncSession = JSON.parse(lsGet(SYNC_SESSION_KEY) || 'null'); }catch(e){ syncSession = null; }
     syncLastAt = parseInt(lsGet(SYNC_LAST_KEY) || '0', 10) || 0;
   }
@@ -2951,7 +3217,7 @@
     if (s) lsSet(SYNC_SESSION_KEY, JSON.stringify(s)); else lsDel(SYNC_SESSION_KEY);
   }
   function saveSyncConfig(url, anon){
-    if (url && anon){ lsSet(SYNC_URL_KEY, url); lsSet(SYNC_ANON_KEY, anon); syncConfig = { url: url.replace(/\/+$/, ''), anonKey: anon }; }
+    if (url && anon){ const clean = normalizeSyncUrl(url); lsSet(SYNC_URL_KEY, clean); lsSet(SYNC_ANON_KEY, anon); syncConfig = { url: clean, anonKey: anon }; }
     else { lsDel(SYNC_URL_KEY); lsDel(SYNC_ANON_KEY); syncConfig = null; }
   }
 
@@ -3017,6 +3283,17 @@
       body: JSON.stringify(body)
     });
     if (!res.ok){
+      // A 404 from /auth/v1/token almost never means wrong email/password —
+      // it means the Project URL is wrong (the dashboard's "API URL" ends in
+      // /rest/v1, which makes this request hit a path that doesn't exist).
+      // Say so plainly, and never log or display the key or password.
+      if (res.status === 404){
+        let m = 'Sign-in failed (404) — the Project URL in the Sync panel looks wrong. It should be exactly https://<your-project-ref>.supabase.co with nothing after it — no /rest/v1, no /auth/v1. Check the URL field and try again.';
+        if (syncConfig && syncConfig.anonKey && syncConfig.anonKey.indexOf('eyJ') !== 0){
+          m += ' That key doesn\'t look like the legacy anon key (starts eyJ) — in Settings > API Keys copy the anon / public key, not the publishable key.';
+        }
+        throw new Error(m);
+      }
       let m = 'Sign-in failed (' + res.status + ')';
       try{ const j = await res.json(); if (j.error_description) m = j.error_description; else if (j.msg) m = j.msg; else if (j.error) m = j.error; }catch(e){ /* keep default */ }
       throw new Error(m);
@@ -3025,6 +3302,19 @@
   }
 
   async function syncSignIn(email, password){
+    // Pre-flight: a pasted /rest/v1 or /auth/v1 suffix is the most likely
+    // cause of a 404, so strip it (and save the cleaned URL) before calling
+    // auth, instead of failing on it. The key is never logged or displayed.
+    if (syncConfig){
+      const cleaned = normalizeSyncUrl(syncConfig.url);
+      if (cleaned !== syncConfig.url){
+        saveSyncConfig(cleaned, syncConfig.anonKey);
+        showToast('Fixed the Project URL — removed the trailing /rest/v1 or /auth/v1 part');
+      }
+      if (syncConfig.anonKey && syncConfig.anonKey.indexOf('eyJ') !== 0){
+        showToast('That key doesn\'t look like the legacy anon key (starts eyJ) — in Settings > API Keys copy the anon / public key, not the publishable key.');
+      }
+    }
     const data = await syncAuthRequest('password', { email: email, password: password });
     saveSyncSession({
       access_token: data.access_token,
@@ -3100,7 +3390,7 @@
   }
   function rowForPantry(userId, at){
     return { user_id: userId, id: PANTRY_ROW_ID, kind: 'pantry',
-      data: { staples: loadStaples(), pantryLast: loadPantry(), updatedAt: at },
+      data: { staples: loadStaples(), pantryLast: loadPantry(), brandPantry: brandPantry, updatedAt: at },
       updated_at: new Date(at).toISOString(), deleted: false };
   }
 
@@ -3130,6 +3420,10 @@
         if (remoteAt > localPantryAt){
           if (typeof pantryRow.data.staples === 'string') saveStaples(pantryRow.data.staples);
           if (typeof pantryRow.data.pantryLast === 'string') savePantry(pantryRow.data.pantryLast);
+          if (Array.isArray(pantryRow.data.brandPantry)){
+            brandPantry = pantryRow.data.brandPantry.map(normalizeBrandItem).filter(Boolean);
+            await saveBrandPantryLocal(); // raw save: no touchPantry here, the timestamp is set below
+          }
           lsSet(SYNC_PANTRY_AT_KEY, String(remoteAt));
           changed = true;
         } else if (localPantryAt > remoteAt){
@@ -3251,7 +3545,10 @@
       await syncNow(true);
       closeSyncPanel(); // success: get out of the way, the pill shows the status
     }catch(e){
-      showToast('Sign-in failed: ' + (e && e.message ? e.message : 'check your details'));
+      // The 404 message already starts with "Sign-in failed (404) — …",
+      // so don't prefix it a second time.
+      const msg = (e && e.message) ? e.message : 'check your details';
+      showToast(msg.indexOf('Sign-in failed') === 0 ? msg : ('Sign-in failed: ' + msg));
       setSyncStatus('signed-out');
     }finally{
       btn.disabled = false; btn.textContent = 'Sign in';
@@ -3264,10 +3561,334 @@
   });
   $('#sync-now').addEventListener('click', async function(){ await syncNow(true); });
 
+
+  // =====================================================================
+  // Barcode scanner + brand pantry (batch 5)
+  //
+  // Flow: scan a packet (camera) or type its barcode -> look it up in
+  // Open Food Facts (free, no key) -> save its label nutrition into the
+  // brand pantry -> the estimator uses those label values first.
+  // If OFF has no such product, an "Add to Open Food Facts" form is
+  // offered, prefilled with the barcode: it saves locally at the same
+  // time, so the product is usable immediately with no wait for OFF
+  // indexing. Photos are NOT uploaded from here.
+  //
+  // Scanner: iPhone Safari has no native BarcodeDetector, so the camera
+  // path uses ZXing (@zxing/browser, loaded on demand from jsDelivr,
+  // unpkg as fallback) — ONLY when the user taps "Scan with camera".
+  // Chrome/Android, which do have BarcodeDetector, use the native
+  // detector and never load ZXing. If the library or the camera fails,
+  // typing the barcode still works end to end. The rest of the app
+  // never depends on the scanner library: batch 4 was fully self-
+  // contained and it stays that way except for this one on-demand load.
+  // OFF login (username + password) is saved on this device only, in
+  // localStorage, exactly like the USDA key — never in the code/repo.
+  // =====================================================================
+  const OFF_USER_KEY = 'off-user-id';
+  const OFF_PASS_KEY = 'off-password';
+  const ZXING_CDNS = [
+    'https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js',
+    'https://unpkg.com/@zxing/browser@0.1.5/umd/zxing-browser.min.js'
+  ];
+  const barcodeOverlay = $('#barcode-overlay');
+  let barcodeStream = null;
+  let barcodeReader = null; // ZXing reader / controls
+  let barcodeScanning = false;
+  let barcodeNativeTimer = null;
+  let lastBarcode = '';
+  let lastOffItem = null;
+
+  function cleanBarcode(code){
+    return String(code || '').replace(/[\s-]/g, '').trim();
+  }
+  function validBarcode(code){
+    return /^[0-9]{4,14}$/.test(code);
+  }
+  function renderBrandPantryList(){
+    const el = $('#brand-pantry-list');
+    if (!el) return;
+    if (!brandPantry.length){ el.innerHTML = '<div class="hint">Nothing scanned yet.</div>'; return; }
+    el.innerHTML = brandPantry.map(function(it){
+      const pg = it.per100g || {};
+      const macros = (pg.calories != null ? Math.round(pg.calories) + ' kcal' : '?') +
+        (pg.protein != null ? ' · ' + pg.protein + 'g protein' : '') +
+        (pg.carbs != null ? ' · ' + pg.carbs + 'g carbs' : '') +
+        (pg.fat != null ? ' · ' + pg.fat + 'g fat' : '') + ' / 100 g';
+      return '<div class="brand-item"><div><b>' + escapeHtml(it.name) + '</b>' +
+        (it.brand ? ' <span class="brand-meta">(' + escapeHtml(it.brand) + ')</span>' : '') +
+        '<div class="brand-meta">' + escapeHtml(macros) +
+        (it.barcode ? ' · barcode ' + escapeHtml(it.barcode) : '') +
+        (it.quantity ? ' · ' + escapeHtml(it.quantity) : '') + '</div></div>' +
+        '<button type="button" class="brand-remove" data-barcode="' + escapeHtml(it.barcode) + '" aria-label="Remove">Remove</button></div>';
+    }).join('');
+  }
+  function showBarcodeAddForm(barcode, prefill){
+    lastBarcode = barcode;
+    $('#barcode-add-form').style.display = 'block';
+    $('#off-name').value = (prefill && prefill.name) || '';
+    $('#off-brand').value = (prefill && prefill.brand) || '';
+    $('#off-quantity').value = (prefill && prefill.quantity) || '';
+    $('#off-calories').value = (prefill && prefill.per100g && prefill.per100g.calories != null) ? prefill.per100g.calories : '';
+    $('#off-protein').value = (prefill && prefill.per100g && prefill.per100g.protein != null) ? prefill.per100g.protein : '';
+    $('#off-carbs').value = (prefill && prefill.per100g && prefill.per100g.carbs != null) ? prefill.per100g.carbs : '';
+    $('#off-fat').value = (prefill && prefill.per100g && prefill.per100g.fat != null) ? prefill.per100g.fat : '';
+    $('#off-user').value = lsGet(OFF_USER_KEY) || '';
+    $('#off-password').value = lsGet(OFF_PASS_KEY) || '';
+  }
+  function hideBarcodeAddForm(){ $('#barcode-add-form').style.display = 'none'; }
+  function barcodeResultHtml(item){
+    const pg = item.per100g || {};
+    return '<div class="brand-item"><div><b>' + escapeHtml(item.name) + '</b>' +
+      (item.brand ? ' <span class="brand-meta">(' + escapeHtml(item.brand) + ')</span>' : '') +
+      '<div class="brand-meta">Per 100 g: ' + (pg.calories != null ? Math.round(pg.calories) + ' kcal' : '?') +
+      (pg.protein != null ? ' · ' + pg.protein + 'g protein' : '') +
+      (pg.carbs != null ? ' · ' + pg.carbs + 'g carbs' : '') +
+      (pg.fat != null ? ' · ' + pg.fat + 'g fat' : '') +
+      (item.quantity ? ' · ' + escapeHtml(item.quantity) : '') + '</div></div></div>';
+  }
+  async function saveScannedItem(item){
+    const saved = upsertBrandItem(item);
+    if (!saved) return false;
+    lastOffItem = saved;
+    await saveBrandPantry();
+    renderBrandPantryList();
+    return true;
+  }
+  async function lookupBarcode(code){
+    const clean = cleanBarcode(code);
+    if (!validBarcode(clean)){ showToast('That barcode doesn\u2019t look right — barcodes are 4–14 digits'); return null; }
+    lastBarcode = clean;
+    const resultEl = $('#barcode-result');
+    resultEl.innerHTML = '<div class="hint">Looking up ' + escapeHtml(clean) + ' in Open Food Facts…</div>';
+    hideBarcodeAddForm();
+    let data;
+    try{
+      const res = await fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(clean) + '.json');
+      if (!res.ok) throw new Error('OFF lookup failed (' + res.status + ')');
+      data = await res.json();
+    }catch(e){
+      resultEl.innerHTML = '<div class="hint">Couldn\u2019t reach Open Food Facts — check you\u2019re online and try again. You can still add the product by hand below.</div>';
+      showBarcodeAddForm(clean, null);
+      return null;
+    }
+    // OFF returns HTTP 200 even for a miss — the body status is the truth.
+    if (!data || data.status !== 1 || !data.product){
+      resultEl.innerHTML = '<div class="hint">Not in Open Food Facts yet. Add it from the label below — it saves to your pantry at the same time, so you can use it straight away.</div>';
+      showBarcodeAddForm(clean, null);
+      return null;
+    }
+    const item = parseOffProduct(data.product, clean);
+    if (!item){
+      // Found, but no usable per-100g nutrition on file: show what OFF
+      // does have, and let her fill the label values in by hand.
+      resultEl.innerHTML = '<div class="hint">Found in Open Food Facts, but it has no per-100g nutrition on file. Fill in the label values below.</div>' +
+        '<div class="brand-item"><div><b>' + escapeHtml(data.product.product_name || 'Unnamed product') + '</b>' +
+        (data.product.brands ? ' <span class="brand-meta">(' + escapeHtml(data.product.brands) + ')</span>' : '') + '</div></div>';
+      showBarcodeAddForm(clean, { name: data.product.product_name || '', brand: data.product.brands || '', quantity: data.product.quantity || '' });
+      return null;
+    }
+    lastOffItem = item;
+    resultEl.innerHTML = barcodeResultHtml(item) +
+      '<button type="button" class="btn-primary" id="barcode-save" style="width:100%; margin-top:10px;">Save to my brand pantry</button>' +
+      '<div class="hint">Saved brands sync to your other device with the pantry. The estimator will use these label values for this product from now on.</div>';
+    const saveBtn = $('#barcode-save');
+    if (saveBtn) saveBtn.addEventListener('click', async function(){
+      if (await saveScannedItem(item)) showToast('Saved to your brand pantry — ' + item.name);
+    });
+    return item;
+  }
+  function loadScript(src){
+    return new Promise(function(resolve){
+      const el = document.createElement('script');
+      el.src = src; el.async = true;
+      el.onload = function(){ resolve(true); };
+      el.onerror = function(){ resolve(false); };
+      document.head.appendChild(el);
+    });
+  }
+  async function loadZXing(){
+    if (window.ZXingBrowser && window.ZXingBrowser.BrowserMultiFormatReader) return true;
+    for (let i = 0; i < ZXING_CDNS.length; i++){
+      if (await loadScript(ZXING_CDNS[i]) && window.ZXingBrowser && window.ZXingBrowser.BrowserMultiFormatReader) return true;
+    }
+    return false;
+  }
+  function stopBarcodeCamera(){
+    barcodeScanning = false;
+    if (barcodeNativeTimer){ clearInterval(barcodeNativeTimer); barcodeNativeTimer = null; }
+    try{ if (barcodeReader && barcodeReader.stop) barcodeReader.stop(); }catch(e){ /* already stopped */ }
+    barcodeReader = null;
+    if (barcodeStream){ barcodeStream.getTracks().forEach(function(t){ try{ t.stop(); }catch(e){} }); barcodeStream = null; }
+    const video = $('#barcode-video');
+    if (video) video.srcObject = null;
+    $('#barcode-video-wrap').classList.remove('open');
+    $('#barcode-stop-btn').style.display = 'none';
+    $('#barcode-scan-btn').style.display = '';
+  }
+  async function startBarcodeCamera(){
+    const hint = $('#barcode-scan-hint');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      hint.textContent = 'This browser can\u2019t open a camera — type the barcode above instead, it works the same.';
+      return;
+    }
+    hint.textContent = 'Starting camera…';
+    let stream;
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    }catch(e){
+      hint.textContent = 'Camera wasn\u2019t available (' + (e && e.name ? e.name : 'permission denied') + ') — type the barcode above instead, it works the same.';
+      return;
+    }
+    barcodeStream = stream;
+    const video = $('#barcode-video');
+    video.srcObject = stream;
+    try{ await video.play(); }catch(e){ /* play may need a tap on some browsers */ }
+    $('#barcode-video-wrap').classList.add('open');
+    $('#barcode-stop-btn').style.display = '';
+    $('#barcode-scan-btn').style.display = 'none';
+    barcodeScanning = true;
+    hint.textContent = 'Point the camera at the barcode — it saves itself when it reads one.';
+    // Native detector first (Chrome/Android): no library download at all.
+    if (window.BarcodeDetector){
+      try{
+        const detector = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39'] });
+        barcodeNativeTimer = setInterval(async function(){
+          if (!barcodeScanning) return;
+          try{
+            const codes = await detector.detect(video);
+            if (codes && codes.length && codes[0].rawValue){
+              const code = cleanBarcode(codes[0].rawValue);
+              if (validBarcode(code)){
+                stopBarcodeCamera();
+                $('#barcode-input').value = code;
+                await lookupBarcode(code);
+              }
+            }
+          }catch(e){ /* a frame failing to decode is normal while scanning */ }
+        }, 500);
+        return;
+      }catch(e){ /* fall through to ZXing */ }
+    }
+    // iPhone Safari (and any browser without BarcodeDetector): ZXing,
+    // loaded on demand from the CDN. If the CDN is unreachable, the
+    // manual entry above still works — nothing else breaks.
+    if (!await loadZXing()){
+      stopBarcodeCamera();
+      hint.textContent = 'The scanner library couldn\u2019t load (check you\u2019re online) — type the barcode above instead, it works the same.';
+      return;
+    }
+    try{
+      const reader = new window.ZXingBrowser.BrowserMultiFormatReader();
+      let devices = [];
+      try{ devices = await window.ZXingBrowser.BrowserCodeReader.listVideoInputDevices(); }catch(e){ devices = []; }
+      let deviceId;
+      if (devices.length){
+        const back = devices.find(function(d){ return /back|rear|environment/i.test(d.label || ''); });
+        deviceId = (back || devices[0]).deviceId;
+      }
+      barcodeReader = await reader.decodeFromVideoDevice(deviceId, video, function(result, err, controls){
+        if (result && result.getText){
+          const code = cleanBarcode(result.getText());
+          if (validBarcode(code)){
+            try{ if (controls && controls.stop) controls.stop(); }catch(e){}
+            stopBarcodeCamera();
+            $('#barcode-input').value = code;
+            lookupBarcode(code);
+          }
+        }
+        // err on most frames is normal (no barcode in view yet) — ignore.
+      });
+    }catch(e){
+      stopBarcodeCamera();
+      hint.textContent = 'The camera scan failed (' + (e && e.message ? e.message : 'unknown error') + ') — type the barcode above instead, it works the same.';
+    }
+  }
+  function openBarcodeOverlay(){
+    renderBrandPantryList();
+    $('#off-user').value = lsGet(OFF_USER_KEY) || '';
+    barcodeOverlay.classList.add('open');
+  }
+  function closeBarcodeOverlay(){
+    stopBarcodeCamera();
+    barcodeOverlay.classList.remove('open');
+  }
+  // OFF write: save locally FIRST (usable immediately), then POST to OFF.
+  // The OFF login is stored per device in localStorage, like the USDA key.
+  async function submitToOff(saveLocalOnly){
+    const barcode = lastBarcode || cleanBarcode($('#barcode-input').value);
+    if (!validBarcode(barcode)){ showToast('Enter the barcode first'); return; }
+    const name = $('#off-name').value.trim(), brand = $('#off-brand').value.trim(), quantity = $('#off-quantity').value.trim();
+    const kcal = parseFloat($('#off-calories').value), protein = parseFloat($('#off-protein').value),
+          carbs = parseFloat($('#off-carbs').value), fat = parseFloat($('#off-fat').value);
+    if (!name){ showToast('Give the product a name first'); return; }
+    if (isNaN(kcal)){ showToast('Calories per 100 g is needed — it\u2019s on the label'); return; }
+    const user = $('#off-user').value.trim(), pass = $('#off-password').value;
+    if (user) lsSet(OFF_USER_KEY, user);
+    if (pass) lsSet(OFF_PASS_KEY, pass);
+    const item = { barcode: barcode, name: name, brand: brand, quantity: quantity,
+      per100g: { calories: kcal, protein: isNaN(protein) ? null : protein, carbs: isNaN(carbs) ? null : carbs, fat: isNaN(fat) ? null : fat },
+      perServing: null, source: 'manual', savedAt: Date.now(), updatedAt: Date.now() };
+    // Local first, always: usable immediately, whatever OFF says.
+    if (!await saveScannedItem(item)){ showToast('Couldn\u2019t save that product — try again'); return; }
+    if (saveLocalOnly){ hideBarcodeAddForm(); showToast('Saved to your brand pantry'); return; }
+    if (!user || !pass){ showToast('Saved to your pantry. To also add it to Open Food Facts, enter your Open Food Facts username + password above.', 5000); return; }
+    const body = new URLSearchParams();
+    body.set('code', barcode); body.set('user_id', user); body.set('password', pass);
+    body.set('product_name', name); body.set('brands', brand); body.set('quantity', quantity);
+    body.set('nutriment_data_per', '100g');
+    body.set('nutriment_energy', String(kcal)); body.set('nutriment_energy_unit', 'kcal');
+    if (!isNaN(protein)) body.set('nutriment_proteins', String(protein));
+    if (!isNaN(carbs)) body.set('nutriment_carbohydrates', String(carbs));
+    if (!isNaN(fat)) body.set('nutriment_fat', String(fat));
+    let offOk = false, offMsg = '';
+    try{
+      const res = await fetch('https://world.openfoodfacts.org/cgi/product_jqm2.pl', {
+        method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body.toString()
+      });
+      const text = await res.text();
+      let j = null; try{ j = JSON.parse(text); }catch(e){ /* OFF sometimes answers in plain text */ }
+      if (j && j.status === 1) offOk = true;
+      else if (/fields saved/i.test(text)) offOk = true;
+      else offMsg = (j && (j.status_verbose || j.error)) ? String(j.status_verbose || j.error) : ('OFF answered ' + res.status);
+    }catch(e){ offMsg = 'couldn\u2019t reach Open Food Facts'; }
+    hideBarcodeAddForm();
+    if (offOk) showToast('Saved to your pantry and added to Open Food Facts', 4500);
+    else showToast('Saved to your pantry — but Open Food Facts didn\u2019t take it (' + offMsg + '). Your pantry copy is safe.', 6000);
+  }
+
+  // ---------- Barcode overlay wiring ----------
+  // Entry points: the nutrition estimator ("Scan a barcode for this
+  // recipe") and the Cook Finder pantry panel. Deliberately NOT the
+  // header — on a phone the extra header button wrapped the controls
+  // row onto another line and pushed the recipe detail down ~46px.
+  $('#finder-scan-btn').addEventListener('click', function(){
+    finderOverlay.classList.remove('open');
+    openBarcodeOverlay();
+  });
+  $('#nutrition-scan-btn').addEventListener('click', function(){
+    nutritionOverlay.classList.remove('open');
+    openBarcodeOverlay();
+  });
+  $('#barcode-close').addEventListener('click', closeBarcodeOverlay);
+  barcodeOverlay.addEventListener('click', function(e){ if (e.target === barcodeOverlay) closeBarcodeOverlay(); });
+  $('#barcode-lookup').addEventListener('click', function(){ lookupBarcode($('#barcode-input').value); });
+  $('#barcode-input').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); lookupBarcode(this.value); } });
+  $('#barcode-scan-btn').addEventListener('click', startBarcodeCamera);
+  $('#barcode-stop-btn').addEventListener('click', stopBarcodeCamera);
+  $('#off-submit').addEventListener('click', function(){ submitToOff(false); });
+  $('#off-save-local').addEventListener('click', function(){ submitToOff(true); });
+  $('#brand-pantry-list').addEventListener('click', function(e){
+    const btn = e.target.closest('.brand-remove');
+    if (btn && btn.dataset.barcode) removeBrandItem(btn.dataset.barcode);
+  });
+
   // ---------- Backup / Restore ----------
   $('#backup-btn').addEventListener('click', function(){
-    if (recipes.length === 0){ showToast('Nothing to back up yet'); return; }
-    const blob = new Blob([JSON.stringify(recipes, null, 2)], { type: 'application/json' });
+    if (recipes.length === 0 && brandPantry.length === 0){ showToast('Nothing to back up yet'); return; }
+    // Batch 5: the backup now carries the brand pantry too. Old backups
+    // were a bare recipe array; the restore below still accepts those.
+    const payload = (brandPantry.length ? { version: 2, recipes: recipes, brandPantry: brandPantry } : recipes);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const stamp = new Date().toISOString().slice(0,10);
@@ -3290,8 +3911,16 @@
     const reader = new FileReader();
     reader.onload = async function(e){
       try{
-        const data = JSON.parse(e.target.result);
-        if (!Array.isArray(data)) throw new Error('bad format');
+        const parsed = JSON.parse(e.target.result);
+        // Batch 5 format: {version:2, recipes:[...], brandPantry:[...]}.
+        // Old format: a bare recipe array. Both are accepted.
+        const data = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.recipes) ? parsed.recipes : null);
+        if (!data) throw new Error('bad format');
+        if (parsed && Array.isArray(parsed.brandPantry)){
+          const before = brandPantry.length;
+          parsed.brandPantry.forEach(function(b){ upsertBrandItem(b); });
+          if (brandPantry.length !== before) await saveBrandPantry();
+        }
         let added = 0, updated = 0;
         data.forEach(function(raw){
           if (!raw || !raw.title) return;
@@ -3319,6 +3948,7 @@
     else storageMode = 'memory';
     $('#storage-banner').style.display = storageMode === 'memory' ? 'block' : 'none';
     recipes = (await loadRecipes()).map(normalizeRecipe);
+    await loadBrandPantry(); // batch 5: scanned brands, for the estimator
     render();
     initSync(); // batch 4: load sync config, show status, auto-sync if signed in
   })();
