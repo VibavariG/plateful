@@ -474,7 +474,9 @@
      onto a second line because its 120px min-width didn't fit. */
   @media (max-width:520px){
     .ing-row{ flex-wrap:nowrap; gap:6px; }
-    .ing-row:not(.ing-row-section){ display:grid; grid-template-columns:56px 84px minmax(0,1fr) 36px; align-items:center; }
+    .ing-row:not(.ing-row-section){ display:grid; grid-template-columns:56px 84px minmax(0,1fr) 32px 32px; align-items:center; }
+    .ing-row:not(.ing-row-section) .ing-pick-btn{ width:32px; height:32px; flex:none; padding:0; font-size:0.95rem; }
+    .ing-row:not(.ing-row-section) .ing-remove{ width:32px; height:32px; flex:none; }
     .ing-row:not(.ing-row-section) .ing-amount{ width:100%; flex:none; padding:10px 4px; }
     .ing-row:not(.ing-row-section) .ing-unit{ width:100%; flex:none; padding:10px 4px; font-size:0.85rem; }
     .ing-row:not(.ing-row-section) .ing-name{ min-width:0; }
@@ -722,6 +724,17 @@
   .pantry-remove:hover{ border-color:var(--dessert); color:var(--dessert); }
   .pantry-empty{ font-size:0.9rem; color:var(--ink-soft); line-height:1.6; }
   .pantry-add-pantry-btn{ background:none; border:none; color:var(--meal-deep); font-weight:700; padding:2px 6px; flex:none; font-size:0.85rem; cursor:pointer; }
+  /* Batch 7: unified scan form + pantry picker */
+  .scan-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:560px){ .scan-form-grid{ grid-template-columns:1fr; } }
+  .pantry-sub{ font-size:0.82rem; color:#6b7a63; margin-top:2px; }
+  .pantry-macros{ font-size:0.8rem; color:#5C7A52; margin-top:2px; }
+  .ing-pick-btn{ background:none; border:none; cursor:pointer; font-size:1rem; padding:4px 6px; flex:none; line-height:1; }
+  .ing-pick-btn:hover{ background:#EEF3EA; border-radius:8px; }
+  .picker-item{ display:flex; justify-content:space-between; gap:10px; width:100%; text-align:left; background:#fff; border:1px solid #E3E8DF; border-radius:10px; padding:12px 14px; margin-bottom:8px; cursor:pointer; font-size:0.95rem; }
+  .picker-item:hover{ border-color:#5C7A52; }
+  .picker-item:disabled{ opacity:0.45; cursor:default; }
+  .picker-item small{ color:#6b7a63; display:block; margin-top:2px; }
   .pantry-add-pantry-btn:hover{ text-decoration:underline; }
   @media (max-width:520px){
     .pantry-item{ flex-wrap:wrap; }
@@ -967,6 +980,20 @@
   </div>
 </div>
 
+<!-- Pantry picker modal (batch 7): pick a pantry item for an ingredient row -->
+<div class="overlay" id="picker-overlay">
+  <div class="panel" style="max-width:480px;">
+    <button class="panel-close" id="picker-close" aria-label="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
+      <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Pick from your pantry</h2>
+      <p class="finder-intro">Choosing an item tags the ingredient to that exact packet — the estimator uses its label nutrition, and Cook Finder knows whether you actually have it.</p>
+      <div id="picker-list"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Cook finder modal -->
 <div class="overlay" id="finder-overlay">
   <div class="panel" style="max-width:620px;">
@@ -1163,7 +1190,7 @@
     </button>
     <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
       <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">Scan a barcode</h2>
-      <p class="finder-intro">Scan a packet and save its label nutrition into your <b>brand pantry</b>. When a recipe ingredient matches a scanned brand, the estimator uses that brand's numbers instead of the generic table or USDA — scanned brand &gt; built-in table &gt; USDA.</p>
+      <p class="finder-intro">Scan a packet and add it to <b>your pantry</b> in one step — your nickname for it, how much, and its use-by date, with the label nutrition attached. When a recipe uses that packet, the estimator uses its label numbers — pantry item &gt; scanned brand &gt; built-in table &gt; USDA.</p>
       <p class="hint" style="margin:0 0 14px;">Open Food Facts is crowdsourced — strongest in France/Europe, thinner for US and Indian items, and some packets simply aren't in it yet. Data can be incomplete or out of date; <b>the label wins</b>, especially for allergens.</p>
       <div class="field">
         <label>Barcode (type it, or scan with the camera)</label>
@@ -1183,6 +1210,49 @@
         <div class="barcode-frame"></div>
       </div>
       <div id="barcode-result"></div>
+      <div id="scan-pantry-form" style="display:none; border:1px solid #DCE5D8; border-radius:14px; padding:16px; margin-top:14px; background:#F6F8F3;">
+        <h3 style="font-family:var(--font-display); margin:0 0 4px;">Add to my pantry</h3>
+        <p class="hint" id="scan-product-sub" style="margin:0 0 12px;"></p>
+        <div class="field"><label for="scan-nickname">Your nickname for it</label><input type="text" class="plain-input" id="scan-nickname" autocomplete="off"></div>
+        <div class="field"><label>Quantity</label>
+          <div class="pantry-qty-row"><span class="stepper">
+            <button type="button" class="stepper-btn" id="scan-qty-minus" aria-label="Less">&minus;</button>
+            <input type="number" id="scan-qty" value="1" min="0" step="any" inputmode="decimal" aria-label="Quantity">
+            <button type="button" class="stepper-btn" id="scan-qty-plus" aria-label="More">+</button>
+            <span class="stepper-unit" id="scan-unit-label">g</span></span></div>
+          <div class="mini-chips" id="scan-unit-chips" style="margin-top:10px;">
+            <button type="button" class="mini-chip" data-unit="g">g</button>
+            <button type="button" class="mini-chip" data-unit="kg">kg</button>
+            <button type="button" class="mini-chip" data-unit="ml">ml</button>
+            <button type="button" class="mini-chip" data-unit="l">l</button>
+            <button type="button" class="mini-chip" data-unit="pieces">pieces</button>
+            <button type="button" class="mini-chip" data-unit="bottle">bottle</button>
+            <button type="button" class="mini-chip" data-unit="can">can</button>
+            <button type="button" class="mini-chip" data-unit="pack">pack</button>
+          </div>
+        </div>
+        <div class="field"><label>Where is it?</label>
+          <div class="mini-chips" id="scan-loc-chips">
+            <button type="button" class="mini-chip active" data-loc="pantry">Pantry</button>
+            <button type="button" class="mini-chip" data-loc="fridge">Fridge</button>
+            <button type="button" class="mini-chip" data-loc="freezer">Freezer</button>
+            <button type="button" class="mini-chip" data-loc="spice">Spice</button>
+          </div>
+        </div>
+        <div class="field-row" style="margin-bottom:14px;">
+          <div class="field" style="flex:1; margin-bottom:0;"><label for="scan-expiry">Use by (optional)</label><input type="date" class="plain-input" id="scan-expiry" style="min-height:48px;"></div>
+          <div class="field" style="flex:0 0 110px; margin-bottom:0;"><label for="scan-low">Low at</label><input type="number" class="plain-input" id="scan-low" value="1" min="0" step="any" inputmode="decimal" style="min-height:48px;"></div>
+        </div>
+        <div class="scan-form-grid">
+          <div class="field"><label for="scan-calories">Calories per 100 g (kcal)</label><input type="number" min="0" step="0.1" class="plain-input" id="scan-calories"></div>
+          <div class="field"><label for="scan-protein">Protein per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="scan-protein"></div>
+          <div class="field"><label for="scan-carbs">Carbs per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="scan-carbs"></div>
+          <div class="field"><label for="scan-fat">Fat per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="scan-fat"></div>
+        </div>
+        <div class="hint" style="margin:0 0 10px;">Nutrition comes from the label (Open Food Facts or your saved brand). Edit it here if the label says otherwise — this is what the estimator will use for this packet.</div>
+        <button type="button" class="btn-primary" id="scan-save-pantry" style="width:100%;">Save to my pantry</button>
+        <button type="button" class="btn-secondary" id="scan-cancel" style="width:100%; margin-top:8px;">Not now</button>
+      </div>
       <div id="barcode-add-form" style="display:none;">
         <h3 style="font-family:var(--font-display); margin:18px 0 6px;">Add this product to Open Food Facts</h3>
         <p class="hint">Not in Open Food Facts yet — or its nutrition is missing. Fill in the label values and it goes to Open Food Facts <b>and</b> into your brand pantry at the same time, so you can use it straight away with no wait for indexing. <b>What you add to Open Food Facts is public and editable by others (ODbL licence)</b> — your local Plateful copy stays your source of truth. Photos are not uploaded from here.</p>
@@ -1643,7 +1713,9 @@
   function ingLineToRow(line){
     const sec = line.match(/^##\s*(.*)$/);
     if (sec) return { type:'section', title: sec[1].trim() };
-    let text = line, amount = '';
+    let text = line, amount = '', pantryId = null;
+    const tagM = text.match(/\[pantry:([^\]\s]+)\]/);
+    if (tagM){ pantryId = tagM[1]; text = text.replace(/\[pantry:[^\]]+\]/g, ' ').trim(); }
     const am = text.match(ING_AMOUNT_RE);
     if (am){ amount = am[1].trim(); text = text.slice(am[0].length); }
     let unit = 'none';
@@ -1657,8 +1729,8 @@
       }
     }
     const name = text.trim();
-    if (!name) return { type:'ingredient', amount:'', unit:'none', name: line.trim() };
-    return { type:'ingredient', amount: amount, unit: unit, name: name };
+    if (!name) return { type:'ingredient', amount:'', unit:'none', name: line.trim(), pantryId: pantryId };
+    return { type:'ingredient', amount: amount, unit: unit, name: name, pantryId: pantryId };
   }
   function ingRowToLine(row){
     if (row.type === 'section') return '## ' + (row.title || '').trim();
@@ -1669,7 +1741,9 @@
       parts.push(ingUnitFor(row.amount, sing));
     }
     if (row.name) parts.push(row.name);
-    return parts.join(' ');
+    let line = parts.join(' ');
+    if (row.pantryId) line += (line ? ' ' : '') + '[pantry:' + row.pantryId + ']';
+    return line;
   }
   function ingCreateRow(data){
     data = data || { type:'ingredient', amount:'', unit:'none', name:'' };
@@ -1685,7 +1759,11 @@
       row.innerHTML = '<input type="text" class="plain-input ing-amount" placeholder="Amt" aria-label="Amount" inputmode="decimal" value="' + escapeHtml(data.amount || '') + '">' +
         '<select class="plain-input ing-unit" aria-label="Unit">' + opts + '</select>' +
         '<input type="text" class="plain-input ing-name" placeholder="Ingredient, e.g. red chilli powder" aria-label="Ingredient name" value="' + escapeHtml(data.name || '') + '">' +
+        '<button type="button" class="ing-pick-btn" title="Pick from your pantry" aria-label="Pick from your pantry">\u{1F9FA}</button>' +
         '<button type="button" class="ing-remove" aria-label="Remove ingredient">×</button>';
+      if (data.pantryId) row.dataset.pantryId = data.pantryId;
+      const pickBtn = row.querySelector('.ing-pick-btn');
+      if (pickBtn) pickBtn.addEventListener('click', function(){ openPantryPicker(row); });
     }
     row.querySelector('.ing-remove').addEventListener('click', function(){
       row.remove();
@@ -1734,7 +1812,7 @@
       const amount = row.querySelector('.ing-amount').value.trim();
       const unit = row.querySelector('.ing-unit').value;
       const name = row.querySelector('.ing-name').value.trim();
-      const line = ingRowToLine({ type:'ingredient', amount: amount, unit: unit, name: name });
+      const line = ingRowToLine({ type:'ingredient', amount: amount, unit: unit, name: name, pantryId: row.dataset.pantryId || null });
       if (line) lines.push(line);
     });
     return lines;
@@ -1771,6 +1849,49 @@
   });
   $('#ing-toggle-text').addEventListener('click', function(){
     ingSetMode(ingMode === 'rows' ? 'text' : 'rows');
+  });
+
+  // ---------- Pantry picker (batch 7) ----------
+  // Tags an ingredient row to one exact pantry item. The tag is stored in
+  // the ingredient line itself ("200 g Nutella [pantry:p...]"), so it
+  // survives text/rows round-trip, backup/restore and sync with no extra
+  // schema. Changing the name by hand after picking keeps the tag until
+  // the tag itself is deleted from the line.
+  let pickerTargetRow = null;
+  function openPantryPicker(rowEl){
+    pickerTargetRow = rowEl || null;
+    const list = $('#picker-list');
+    const live = livePantrySorted();
+    const all = pantryItems.slice();
+    if (!all.length){
+      list.innerHTML = '<div class="hint">Your pantry is empty — add items in the Pantry tab first, or scan a packet.</div>';
+    } else {
+      list.innerHTML = all.map(function(it){
+        const st = pantryStatus(it);
+        const dead = st.expired || it.qty <= 0;
+        const sub = (it.productName && it.productName !== it.name ? escapeHtml(it.productName) + (it.brand ? ' (' + escapeHtml(it.brand) + ')' : '') : (it.brand ? escapeHtml(it.brand) : '')) +
+          (it.barcode ? ' · barcode ' + escapeHtml(it.barcode) : '');
+        const qty = escapeHtml(formatPantryQty(it)) + (st.expired ? ' · expired' : (it.qty <= 0 ? ' · out of stock' : ''));
+        return '<button type="button" class="picker-item" data-id="' + it.id + '"' + (dead ? ' disabled' : '') + '>' +
+          '<span><b>' + escapeHtml(it.name) + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span>' +
+          '<span style="white-space:nowrap;">' + qty + '</span></button>';
+      }).join('');
+    }
+    $('#picker-overlay').classList.add('open');
+  }
+  function closePantryPicker(){ $('#picker-overlay').classList.remove('open'); pickerTargetRow = null; }
+  $('#picker-close').addEventListener('click', closePantryPicker);
+  $('#picker-overlay').addEventListener('click', function(e){ if (e.target === $('#picker-overlay')) closePantryPicker(); });
+  $('#picker-list').addEventListener('click', function(e){
+    const btn = e.target.closest('.picker-item');
+    if (!btn || btn.disabled) return;
+    const it = findPantryItemById(btn.dataset.id);
+    if (!it || !pickerTargetRow) { closePantryPicker(); return; }
+    const nameEl = pickerTargetRow.querySelector('.ing-name');
+    if (nameEl) nameEl.value = it.name;
+    pickerTargetRow.dataset.pantryId = it.id;
+    closePantryPicker();
+    if (nameEl) nameEl.focus();
   });
 
   // ---------- Add/Edit modal ----------
@@ -2553,6 +2674,12 @@
   // stale parsed data behind.
   function parseIngredientLine(raw){
     let text = raw;
+    // Batch 7: a tagged line ends in " [pantry:<id>]" — strip the tag before
+    // parsing so it never pollutes the core name, and keep the id on the
+    // parsed result so finder / estimator / deduction can match exactly.
+    let pantryId = null;
+    const tagM = text.match(/\[pantry:([^\]\s]+)\]/);
+    if (tagM){ pantryId = tagM[1]; text = text.replace(/\[pantry:[^\]]+\]/g, ' '); }
     const optional = /\boptional\b/i.test(text) || /\(\s*optional\s*\)/i.test(text);
     text = text.replace(/\(\s*optional\s*\)/ig, ' ').replace(/\boptional\b/ig, ' ');
     // "(or coconut milk)" -> " or coconut milk" so it survives as an alternative
@@ -2582,21 +2709,45 @@
 
     const ingredient = alternatives.length ? alternatives[0] : null;
 
-    return { raw: raw, quantity: quantity, unit: unit, ingredient: ingredient, optional: optional, alternatives: alternatives };
+    return { raw: raw, quantity: quantity, unit: unit, ingredient: ingredient, optional: optional, alternatives: alternatives, pantryId: pantryId };
   }
 
+  // Batch 7: live pantry rows, oldest expiry first (FIFO) — undated last.
+  function livePantrySorted(){
+    return pantryLiveItems().slice().sort(function(a, b){
+      const da = a.expiry || '', db = b.expiry || '';
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da < db ? -1 : (da > db ? 1 : 0);
+    });
+  }
+  function findPantryItemById(id){
+    if (!id) return null;
+    for (let i = 0; i < pantryItems.length; i++){ if (pantryItems[i].id === id) return pantryItems[i]; }
+    return null;
+  }
   // Batch 6: onHand is the pantry quantity ("500 g") when a live (not
   // expired) inventory item matches the ingredient by name. Staples are
-  // assumed available but have no quantity to show.
+  // assumed available but have no quantity to show. Batch 7: a tagged
+  // line ([pantry:id]) matches that exact item only — out of stock or
+  // expired means missing, even if a same-named item is on the shelf.
   function ingredientStatus(parsed, pantryCores, stapleCores, pantryLive){
+    if (parsed.pantryId){
+      const it = findPantryItemById(parsed.pantryId);
+      const live = it && !pantryStatus(it).expired && it.qty > 0;
+      return { have: !!live, staple: false, optional: parsed.optional, raw: parsed.raw, onHand: live ? formatPantryQty(it) : null };
+    }
     const inPantry = parsed.alternatives.some(function(a){ return coreInList(a, pantryCores); });
     const isStaple = !inPantry && parsed.alternatives.some(function(a){ return coreInList(a, stapleCores); });
     let onHand = null;
     if (inPantry && pantryLive){
-      for (let i = 0; i < pantryLive.length; i++){
-        const core = toCore(pantryLive[i].name);
-        if (parsed.alternatives.some(function(a){ return coresMatch(a, core); })){
-          onHand = formatPantryQty(pantryLive[i]);
+      const sorted = livePantrySorted();
+      for (let i = 0; i < sorted.length; i++){
+        const core = toCore(sorted[i].name);
+        const extra = [toCore(sorted[i].productName || ''), toCore(sorted[i].brand || '')].filter(Boolean);
+        if (parsed.alternatives.some(function(a){ return coresMatch(a, core) || extra.some(function(e){ return coresMatch(a, e); }); })){
+          onHand = formatPantryQty(sorted[i]);
           break;
         }
       }
@@ -2690,7 +2841,11 @@
     const extraCores = extraText ? tokenizeToCores(extraText) : [];
     extraCores.forEach(function(c){ if (pantryCores.indexOf(c) === -1) pantryCores.push(c); });
     const stapleCores = staplesText ? tokenizeToCores(staplesText) : [];
-    const hasPantryIntent = pantryCores.length > 0;
+    // Batch 7: a recipe tagged to a pantry item counts as pantry intent
+    // even when nothing live is on the shelf — otherwise an expired /
+    // out-of-stock tagged item would never be shown as missing.
+    const hasTagged = recipes.some(function(r){ return flattenLines(r.ingredients).some(function(l){ return /\[pantry:/.test(l); }); });
+    const hasPantryIntent = pantryCores.length > 0 || hasTagged;
 
     let pool = recipes.slice();
     if (maxTime){
@@ -3263,6 +3418,39 @@
   }
 
   async function resolveIngredient(parsed){
+    // 0a. Batch 7: a tagged pantry item, or a live pantry item that matches
+    //     by nickname/product name, wins first — its own label values.
+    //     A tagged item that is out of stock / expired does NOT win here;
+    //     it falls through so the estimate still has a number, while the
+    //     Cook Finder (ingredientStatus) still calls it missing.
+    const pantryMatch = (function(){
+      if (parsed.pantryId){
+        const it = findPantryItemById(parsed.pantryId);
+        if (it && !pantryStatus(it).expired && it.qty > 0) return it;
+        return null;
+      }
+      const live = pantryLiveItems().filter(function(x){ return x.per100g && x.per100g.calories != null && x.qty > 0; });
+      if (!live.length) return null;
+      const mapped = live.map(function(x){ return { name: x.name + ' ' + (x.productName || ''), brand: x.brand || '', per100g: x.per100g, _it: x }; });
+      const hit = findBrandMatch(parsed.ingredient, parsed.raw, mapped);
+      return hit ? hit._it : null;
+    })();
+    if (pantryMatch){
+      const grams = brandGramsFor(parsed, pantryMatch);
+      if (grams != null){
+        const f = grams / 100;
+        const pg = pantryMatch.per100g;
+        return {
+          status: 'ok', source: 'pantry', brandName: pantryMatch.name, brandBrand: pantryMatch.brand || '',
+          food: { description: pantryMatch.name + (pantryMatch.brand ? ' (' + pantryMatch.brand + ')' : ''), per100g: pg },
+          core: parsed.alternatives[0], grams: grams,
+          calories: (pg.calories != null ? pg.calories : 0) * f,
+          protein: (pg.protein != null ? pg.protein : 0) * f,
+          carbs: (pg.carbs != null ? pg.carbs : 0) * f,
+          fat: (pg.fat != null ? pg.fat : 0) * f
+        };
+      }
+    }
     // 0. Scanned brand first (batch 5): a packet's label values beat the
     //    generic override table and USDA — but only when the brand really
     //    matches the ingredient (findBrandMatch) AND the amount converts
@@ -3334,6 +3522,7 @@
       if (row.status === 'ok'){
         meta = '<b>' + Math.round(row.calories) + ' kcal</b><br>≈' + Math.round(row.grams) + ' g · ' + escapeHtml(row.food.description);
         if (row.source === 'brand') meta += '<br>using scanned brand: ' + escapeHtml(row.brandName + (row.brandBrand ? ' (' + row.brandBrand + ')' : ''));
+        if (row.source === 'pantry') meta += '<br>using pantry item: ' + escapeHtml(row.brandName + (row.brandBrand ? ' (' + row.brandBrand + ')' : ''));
       } else if (row.status === 'not-found'){
         meta = 'not in USDA — skipped';
       } else if (row.status === 'no-amount'){
@@ -3958,6 +4147,14 @@
   let barcodeNativeTimer = null;
   let lastBarcode = '';
   let lastOffItem = null;
+  // Batch 7: unified scan flow state. lastKnownBrand is the brand-library
+  // entry for this barcode (if any) — nutrition is prefilled from it
+  // without needing Open Food Facts. currentScanItem is the item the
+  // unified form is about (OFF result, library entry, or manual entry).
+  let lastKnownBrand = null;
+  let currentScanItem = null;
+  let scanUnit = 'g';
+  let scanLoc = 'pantry';
 
   function cleanBarcode(code){
     return String(code || '').replace(/[\s-]/g, '').trim();
@@ -4009,6 +4206,98 @@
       (pg.fat != null ? ' · ' + pg.fat + 'g fat' : '') +
       (item.quantity ? ' · ' + escapeHtml(item.quantity) : '') + '</div></div></div>';
   }
+  function findBrandByBarcode(code){
+    if (!code) return null;
+    for (let i = 0; i < brandPantry.length; i++){ if (brandPantry[i].barcode === code) return brandPantry[i]; }
+    return null;
+  }
+  function scanSetUnit(u){
+    scanUnit = u;
+    const label = $('#scan-unit-label');
+    if (label) label.textContent = u;
+    $$('#scan-unit-chips .mini-chip').forEach(function(b){ b.classList.toggle('active', b.dataset.unit === u); });
+  }
+  function scanSetLoc(l){
+    scanLoc = l;
+    $$('#scan-loc-chips .mini-chip').forEach(function(b){ b.classList.toggle('active', b.dataset.loc === l); });
+  }
+  function hideScanPantryForm(){ const f = $('#scan-pantry-form'); if (f) f.style.display = 'none'; currentScanItem = null; }
+  // Batch 7: ONE form for a scanned packet — nickname (default = the
+  // product name), quantity + unit, location, use-by date (asked here,
+  // at scan time), low-stock threshold, and per-100g nutrition prefilled
+  // from OFF or from the saved brand library, editable by hand.
+  function openScanPantryForm(item, barcode, note){
+    currentScanItem = item || null;
+    const code = barcode || (item && item.barcode) || lastBarcode || '';
+    const parsed = parsePackQuantity(item && item.quantity);
+    const qty = parsed ? parsed.qty : 1;
+    const unit = parsed ? parsed.unit : 'pieces';
+    $('#scan-nickname').value = (item && item.name) || '';
+    const sub = $('#scan-product-sub');
+    if (sub){
+      const bits = [];
+      if (item && item.name) bits.push(escapeHtml(item.name));
+      if (item && item.brand) bits.push('(' + escapeHtml(item.brand) + ')');
+      if (code) bits.push('barcode ' + escapeHtml(code));
+      sub.innerHTML = (bits.length ? bits.join(' ') + ' — ' : '') + 'Check the nickname, quantity and use-by date, then save. One tap adds it to your pantry with its label nutrition attached.' +
+        (note ? '<br><b>' + escapeHtml(note) + '</b>' : '');
+    }
+    $('#scan-qty').value = String(qty);
+    scanSetUnit(unit);
+    scanSetLoc('pantry');
+    $('#scan-expiry').value = '';
+    $('#scan-low').value = '1';
+    const pg = (item && item.per100g) || {};
+    $('#scan-calories').value = (pg.calories != null) ? String(pg.calories) : '';
+    $('#scan-protein').value = (pg.protein != null) ? String(pg.protein) : '';
+    $('#scan-carbs').value = (pg.carbs != null) ? String(pg.carbs) : '';
+    $('#scan-fat').value = (pg.fat != null) ? String(pg.fat) : '';
+    $('#scan-pantry-form').style.display = 'block';
+  }
+  async function saveScanPantryForm(){
+    const item = currentScanItem || {};
+    const nickname = $('#scan-nickname').value.trim();
+    if (!nickname){ showToast('Give it a nickname first'); $('#scan-nickname').focus(); return; }
+    let qty = parseFloat($('#scan-qty').value);
+    if (isNaN(qty) || qty < 0) qty = 1;
+    const lowRaw = parseFloat($('#scan-low').value);
+    const kcal = parseFloat($('#scan-calories').value);
+    const protein = parseFloat($('#scan-protein').value), carbs = parseFloat($('#scan-carbs').value), fat = parseFloat($('#scan-fat').value);
+    const per100g = (!isNaN(kcal)) ? { calories: kcal, protein: isNaN(protein) ? null : protein, carbs: isNaN(carbs) ? null : carbs, fat: isNaN(fat) ? null : fat } : (item.per100g || null);
+    const barcode = item.barcode || lastBarcode || '';
+    // The brand library keeps the nutrition even after this packet is
+    // used up (batch 7): saving here upserts the library entry, and
+    // removing a pantry item never touches it.
+    if (per100g){
+      upsertBrandItem({ barcode: barcode, name: item.name || nickname, brand: item.brand || '', quantity: item.quantity || '',
+        per100g: per100g, perServing: item.perServing || null, source: item.source || 'off', savedAt: Date.now(), updatedAt: Date.now() });
+      await saveBrandPantry();
+      renderBrandPantryList();
+    }
+    const pantryItem = normalizePantryItem({
+      name: nickname, qty: qty, unit: scanUnit, location: scanLoc,
+      expiry: $('#scan-expiry').value || '', lowAt: (isNaN(lowRaw) ? 1 : lowRaw),
+      barcode: barcode, productName: item.name || '', brand: item.brand || '', per100g: per100g
+    });
+    if (!pantryItem) return;
+    const existing = findTopUpTarget(pantryItem);
+    if (existing){
+      existing.qty = Math.round((existing.qty + pantryItem.qty) * 100) / 100;
+      if (pantryItem.expiry) existing.expiry = pantryItem.expiry;
+      if (!existing.per100g && pantryItem.per100g) existing.per100g = pantryItem.per100g;
+      existing.updatedAt = Date.now();
+      await savePantryItems();
+      showToast('Topped up ' + existing.name + ' \u2014 now ' + formatPantryQty(existing));
+    } else {
+      pantryItems.push(pantryItem);
+      await savePantryItems();
+      showToast('Added ' + pantryItem.name + ' to your pantry');
+    }
+    hideScanPantryForm();
+    renderPantryList();
+    if (barcodeOverlay) barcodeOverlay.classList.remove('open');
+    openPantry();
+  }
   async function saveScannedItem(item){
     const saved = upsertBrandItem(item);
     if (!saved) return false;
@@ -4021,29 +4310,50 @@
     const clean = cleanBarcode(code);
     if (!validBarcode(clean)){ showToast('That barcode doesn\u2019t look right — barcodes are 4–14 digits'); return null; }
     lastBarcode = clean;
+    // Batch 7: the saved brand library is checked FIRST — a re-scan
+    // prefills nutrition from it even offline, before OFF is consulted.
+    lastKnownBrand = findBrandByBarcode(clean);
     const resultEl = $('#barcode-result');
     resultEl.innerHTML = '<div class="hint">Looking up ' + escapeHtml(clean) + ' in Open Food Facts…</div>';
     hideBarcodeAddForm();
+    hideScanPantryForm();
     let data;
     try{
       const res = await fetch('https://world.openfoodfacts.org/api/v2/product/' + encodeURIComponent(clean) + '.json');
       if (!res.ok) throw new Error('OFF lookup failed (' + res.status + ')');
       data = await res.json();
     }catch(e){
+      if (lastKnownBrand){
+        resultEl.innerHTML = barcodeResultHtml(lastKnownBrand);
+        openScanPantryForm(lastKnownBrand, clean, 'Offline — using the label values you saved last time.');
+        return lastKnownBrand;
+      }
       resultEl.innerHTML = '<div class="hint">Couldn\u2019t reach Open Food Facts — check you\u2019re online and try again. You can still add the product by hand below.</div>';
       showBarcodeAddForm(clean, null);
       return null;
     }
     // OFF returns HTTP 200 even for a miss — the body status is the truth.
     if (!data || data.status !== 1 || !data.product){
+      if (lastKnownBrand){
+        resultEl.innerHTML = barcodeResultHtml(lastKnownBrand);
+        openScanPantryForm(lastKnownBrand, clean, 'Not in Open Food Facts this time — using the label values you saved last time.');
+        return lastKnownBrand;
+      }
       resultEl.innerHTML = '<div class="hint">Not in Open Food Facts yet. Add it from the label below — it saves to your pantry at the same time, so you can use it straight away.</div>';
       showBarcodeAddForm(clean, null);
       return null;
     }
     const item = parseOffProduct(data.product, clean);
     if (!item){
-      // Found, but no usable per-100g nutrition on file: show what OFF
-      // does have, and let her fill the label values in by hand.
+      // Found, but no usable per-100g nutrition on file. If the brand
+      // library already knows this barcode, its saved nutrition wins.
+      if (lastKnownBrand){
+        const merged = { barcode: clean, name: data.product.product_name || lastKnownBrand.name, brand: data.product.brands || lastKnownBrand.brand,
+          quantity: data.product.quantity || lastKnownBrand.quantity, per100g: lastKnownBrand.per100g, perServing: lastKnownBrand.perServing || null, source: 'off', savedAt: Date.now(), updatedAt: Date.now() };
+        resultEl.innerHTML = barcodeResultHtml(merged);
+        openScanPantryForm(merged, clean, 'Open Food Facts has no nutrition for this one — using the label values you saved last time.');
+        return merged;
+      }
       resultEl.innerHTML = '<div class="hint">Found in Open Food Facts, but it has no per-100g nutrition on file. Fill in the label values below.</div>' +
         '<div class="brand-item"><div><b>' + escapeHtml(data.product.product_name || 'Unnamed product') + '</b>' +
         (data.product.brands ? ' <span class="brand-meta">(' + escapeHtml(data.product.brands) + ')</span>' : '') + '</div></div>';
@@ -4061,8 +4371,11 @@
     });
     const addPantryBtn = $('#barcode-add-pantry');
     if (addPantryBtn) addPantryBtn.addEventListener('click', async function(){
-      if (await saveScannedItem(item)) openPantryForBrandItem(item);
+      if (await saveScannedItem(item)) openScanPantryForm(item, clean);
     });
+    // Batch 7: the unified form is shown straight away with the lookup
+    // result — scan, check nickname/qty/expiry, one tap to save.
+    openScanPantryForm(item, clean);
     return item;
   }
   function loadScript(src){
@@ -4198,7 +4511,7 @@
       perServing: null, source: 'manual', savedAt: Date.now(), updatedAt: Date.now() };
     // Local first, always: usable immediately, whatever OFF says.
     if (!await saveScannedItem(item)){ showToast('Couldn\u2019t save that product — try again'); return; }
-    if (saveLocalOnly){ hideBarcodeAddForm(); showToast('Saved to your brand pantry'); return; }
+    if (saveLocalOnly){ hideBarcodeAddForm(); openScanPantryForm(item, barcode); showToast('Saved — now check the nickname, quantity and use-by date'); return; }
     if (!user || !pass){ showToast('Saved to your pantry. To also add it to Open Food Facts, enter your Open Food Facts username + password above.', 5000); return; }
     const body = new URLSearchParams();
     body.set('code', barcode); body.set('user_id', user); body.set('password', pass);
@@ -4220,7 +4533,8 @@
       else offMsg = (j && (j.status_verbose || j.error)) ? String(j.status_verbose || j.error) : ('OFF answered ' + res.status);
     }catch(e){ offMsg = 'couldn\u2019t reach Open Food Facts'; }
     hideBarcodeAddForm();
-    if (offOk) showToast('Saved to your pantry and added to Open Food Facts', 4500);
+    openScanPantryForm(item, barcode);
+    if (offOk) showToast('Saved to your pantry and added to Open Food Facts — now check the nickname, quantity and use-by date', 4500);
     else showToast('Saved to your pantry — but Open Food Facts didn\u2019t take it (' + offMsg + '). Your pantry copy is safe.', 6000);
   }
 
@@ -4243,6 +4557,12 @@
   $('#barcode-input').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); lookupBarcode(this.value); } });
   $('#barcode-scan-btn').addEventListener('click', startBarcodeCamera);
   $('#barcode-stop-btn').addEventListener('click', stopBarcodeCamera);
+  $('#scan-save-pantry').addEventListener('click', saveScanPantryForm);
+  $('#scan-cancel').addEventListener('click', hideScanPantryForm);
+  $('#scan-qty-minus').addEventListener('click', function(){ const el = $('#scan-qty'); let v = parseFloat(el.value); if (isNaN(v)) v = 0; el.value = String(Math.max(0, Math.round((v - pantryStepFor(scanUnit)) * 100) / 100)); });
+  $('#scan-qty-plus').addEventListener('click', function(){ const el = $('#scan-qty'); let v = parseFloat(el.value); if (isNaN(v)) v = 0; el.value = String(Math.round((v + pantryStepFor(scanUnit)) * 100) / 100); });
+  $('#scan-unit-chips').addEventListener('click', function(e){ const b = e.target.closest('.mini-chip'); if (b) scanSetUnit(b.dataset.unit); });
+  $('#scan-loc-chips').addEventListener('click', function(e){ const b = e.target.closest('.mini-chip'); if (b) scanSetLoc(b.dataset.loc); });
   $('#off-submit').addEventListener('click', function(){ submitToOff(false); });
   $('#off-save-local').addEventListener('click', function(){ submitToOff(true); });
   $('#brand-pantry-list').addEventListener('click', function(e){
@@ -4278,21 +4598,45 @@
   let pantryUnit = 'pieces';
   let pantryLoc = 'pantry';
 
+  // Batch 7: a pantry item may carry scanned fields — barcode, per-100g
+  // nutrition, productName/brand (the packet's real name under the
+  // nickname). All are optional: batch 6 items without them load exactly
+  // as before, with name as the display name. `name` IS the nickname.
   function normalizePantryItem(raw){
     if (!raw || typeof raw !== 'object') return null;
-    const name = String(raw.name || '').trim();
+    const name = String(raw.nickname || raw.name || '').trim();
     if (!name) return null;
     const qty = (typeof raw.qty === 'number' && isFinite(raw.qty) && raw.qty >= 0) ? raw.qty : 1;
     const unit = PANTRY_UNITS.indexOf(raw.unit) > -1 ? raw.unit : 'pieces';
     const loc = PANTRY_LOCS.indexOf(raw.location) > -1 ? raw.location : 'pantry';
     const expiry = (typeof raw.expiry === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.expiry)) ? raw.expiry : '';
     const lowAt = (typeof raw.lowAt === 'number' && isFinite(raw.lowAt) && raw.lowAt >= 0) ? raw.lowAt : 1;
+    const pg = raw.per100g || null;
+    const per100g = (pg && typeof pg.calories === 'number') ? {
+      calories: pg.calories,
+      protein: (typeof pg.protein === 'number' ? pg.protein : null),
+      carbs: (typeof pg.carbs === 'number' ? pg.carbs : null),
+      fat: (typeof pg.fat === 'number' ? pg.fat : null)
+    } : null;
     return {
       id: String(raw.id || ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2,8))),
       name: name, qty: qty, unit: unit, location: loc, expiry: expiry, lowAt: lowAt,
+      barcode: String(raw.barcode || ''), productName: String(raw.productName || ''), brand: String(raw.brand || ''),
+      per100g: per100g,
       createdAt: (typeof raw.createdAt === 'number' ? raw.createdAt : Date.now()),
       updatedAt: (typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now())
     };
+  }
+  // Batch 7 top-up rule: a scanned item tops up only when barcode AND
+  // expiry match (or both have no expiry). A manual item (no barcode)
+  // keeps the batch 6 rule — same name+unit tops up, newest expiry wins
+  // — so the batch 6 top-up behaviour is preserved for hand-typed items.
+  function findTopUpTarget(item){
+    return pantryItems.find(function(x){
+      if (x.name.toLowerCase() !== item.name.toLowerCase() || x.unit !== item.unit) return false;
+      if (item.barcode) return (x.barcode || '') === item.barcode && (x.expiry || '') === (item.expiry || '');
+      return true;
+    }) || null;
   }
   async function loadPantryItems(){
     let v;
@@ -4337,7 +4681,14 @@
   }
   function pantryLiveItems(){ return pantryItems.filter(function(it){ return !pantryStatus(it).expired; }); }
   function pantryInventoryCores(){
-    return pantryLiveItems().map(function(it){ return toCore(it.name); }).filter(Boolean);
+    const out = [];
+    pantryLiveItems().forEach(function(it){
+      [it.name, it.productName, it.brand].forEach(function(n){
+        const c = toCore(n || '');
+        if (c && out.indexOf(c) === -1) out.push(c);
+      });
+    });
+    return out;
   }
 
   function pantryCounts(){
@@ -4410,8 +4761,17 @@
       const flags = (st.expired ? '<span class="pantry-flag expired">Expired</span>' : '') +
         (!st.expired && st.soon ? '<span class="pantry-flag soon">Use soon</span>' : '') +
         (st.low ? '<span class="pantry-flag low">Low</span>' : '');
+      const subBits = [];
+      if (it.productName && it.productName !== it.name) subBits.push(escapeHtml(it.productName) + (it.brand ? ' (' + escapeHtml(it.brand) + ')' : ''));
+      else if (it.brand) subBits.push(escapeHtml(it.brand));
+      if (it.barcode) subBits.push('barcode ' + escapeHtml(it.barcode));
+      const subHtml = subBits.length ? '<div class="pantry-sub">' + subBits.join(' · ') + '</div>' : '';
+      const macrosHtml = (it.per100g && it.per100g.calories != null) ? '<div class="pantry-macros">' + Math.round(it.per100g.calories) + ' kcal/100 g' +
+        (it.per100g.protein != null ? ' · ' + it.per100g.protein + 'g protein' : '') +
+        (it.per100g.carbs != null ? ' · ' + it.per100g.carbs + 'g carbs' : '') +
+        (it.per100g.fat != null ? ' · ' + it.per100g.fat + 'g fat' : '') + '</div>' : '';
       return '<div class="pantry-item' + (st.expired ? ' expired-row' : '') + '" data-id="' + it.id + '">' +
-        '<div><div class="pantry-item-name">' + escapeHtml(it.name) + flags + '</div>' +
+        '<div><div class="pantry-item-name">' + escapeHtml(it.name) + flags + '</div>' + subHtml + macrosHtml +
         '<div class="pantry-item-meta">' + escapeHtml(PANTRY_LOC_LABEL[it.location]) + ' \u00b7 ' +
         '<input type="date" class="pantry-expiry" data-id="' + it.id + '" value="' + it.expiry + '" aria-label="Use by date for ' + escapeHtml(it.name) + '"> ' +
         escapeHtml(pantryExpiryText(it)) + '</div></div>' +
@@ -4443,23 +4803,35 @@
     v = Math.max(0, v + delta);
     el.value = String(Math.round(v * 100) / 100);
   }
+  // Batch 7: set by the unified scan flow (openPantryForBrandItem) so a
+  // scanned packet's barcode/nutrition/product name survive into the
+  // pantry item created by the pantry form. Cleared after every add.
+  let pendingScanItem = null;
   async function pantryAddFromForm(){
     const name = $('#pantry-name').value.trim();
     if (!name){ showToast('Type the item name first'); $('#pantry-name').focus(); return; }
     let qty = parseFloat($('#pantry-qty').value);
     if (isNaN(qty) || qty < 0) qty = 1;
     const lowRaw = parseFloat($('#pantry-low').value);
+    const scan = pendingScanItem || {};
+    pendingScanItem = null;
     const item = normalizePantryItem({
       name: name, qty: qty, unit: pantryUnit, location: pantryLoc,
-      expiry: $('#pantry-expiry').value || '', lowAt: (isNaN(lowRaw) ? 1 : lowRaw)
+      expiry: $('#pantry-expiry').value || '', lowAt: (isNaN(lowRaw) ? 1 : lowRaw),
+      barcode: scan.barcode || '', productName: scan.productName || '', brand: scan.brand || '',
+      per100g: scan.per100g || null
     });
     if (!item) return;
-    // Same name + unit already on the shelf? Top it up instead of a
-    // duplicate row; the newest expiry wins.
-    const existing = pantryItems.find(function(x){ return x.name.toLowerCase() === item.name.toLowerCase() && x.unit === item.unit; });
+    // Top-up per findTopUpTarget (batch 7): scanned = barcode+expiry must
+    // match; manual = same name+unit, newest expiry wins.
+    const existing = findTopUpTarget(item);
     if (existing){
       existing.qty = Math.round((existing.qty + item.qty) * 100) / 100;
       if (item.expiry) existing.expiry = item.expiry;
+      if (!existing.per100g && item.per100g) existing.per100g = item.per100g;
+      if (!existing.barcode && item.barcode) existing.barcode = item.barcode;
+      if (!existing.productName && item.productName) existing.productName = item.productName;
+      if (!existing.brand && item.brand) existing.brand = item.brand;
       existing.updatedAt = Date.now();
     } else {
       pantryItems.push(item);
@@ -4502,6 +4874,8 @@
       if (prefill.unit) pantrySetUnit(prefill.unit);
       if (prefill.location) pantrySetLoc(prefill.location);
       if (prefill.expiry) $('#pantry-expiry').value = prefill.expiry;
+      if (prefill.barcode || prefill.per100g || prefill.productName) pendingScanItem = {
+        barcode: prefill.barcode || '', productName: prefill.productName || '', brand: prefill.brand || '', per100g: prefill.per100g || null };
     }
     renderPantryList();
     $('#pantry-overlay').classList.add('open');
@@ -4529,7 +4903,11 @@
     // The barcode overlay sits above the pantry overlay in the DOM, so
     // close it first or it would cover the prefilled form.
     if (barcodeOverlay) barcodeOverlay.classList.remove('open');
-    openPantry({ name: item.name, qty: parsed ? parsed.qty : 1, unit: parsed ? parsed.unit : 'pieces' });
+    // Batch 7: the scanned packet's barcode, label nutrition, product
+    // name and brand ride along (pendingScanItem) — they are no longer
+    // dropped by the bridge into the pantry.
+    openPantry({ name: item.name, qty: parsed ? parsed.qty : 1, unit: parsed ? parsed.unit : 'pieces',
+      barcode: item.barcode || '', productName: item.name, brand: item.brand || '', per100g: item.per100g || null });
     showToast('Prefilled from ' + item.name + ' \u2014 tap Add to pantry');
   }
 
@@ -4550,11 +4928,26 @@
       const needUnit = (UNIT_ALIASES[p.unit] || p.unit);
       const base = DEDUCT_BASE[needUnit];
       if (!base) return;
-      for (let i = 0; i < pantryItems.length; i++){
-        const it = pantryItems[i];
+      // Batch 7: a tagged line deducts from that exact item only.
+      const live = livePantrySorted();
+      if (p.pantryId){
+        const it = findPantryItemById(p.pantryId);
+        if (!it || pantryStatus(it).expired) return;
+        const itBase = DEDUCT_BASE[it.unit];
+        if (!itBase || itBase[0] !== base[0]) return;
+        if (it.qty * itBase[1] < p.quantity * base[1]) return; // not enough — leave it alone
+        out.push({ item: it, need: p.quantity, needUnit: needUnit, line: line });
+        return;
+      }
+      // Untagged: oldest-expiry matching live row first (FIFO). If the
+      // oldest row does not have enough, do not raid a newer row — leave
+      // the line alone, as before.
+      for (let i = 0; i < live.length; i++){
+        const it = live[i];
         const itBase = DEDUCT_BASE[it.unit];
         if (!itBase || itBase[0] !== base[0]) continue;
-        if (!coresMatch(p.ingredient, toCore(it.name))) continue;
+        const names = [toCore(it.name), toCore(it.productName || ''), toCore(it.brand || '')].filter(Boolean);
+        if (!names.some(function(n){ return coresMatch(p.ingredient, n); })) continue;
         if (it.qty * itBase[1] < p.quantity * base[1]) return; // not enough — leave it alone
         out.push({ item: it, need: p.quantity, needUnit: needUnit, line: line });
         return;
@@ -4618,9 +5011,10 @@
   // ---------- Backup / Restore ----------
   $('#backup-btn').addEventListener('click', function(){
     if (recipes.length === 0 && brandPantry.length === 0 && pantryItems.length === 0){ showToast('Nothing to back up yet'); return; }
-    // Batch 6: the backup now carries the pantry inventory too (version 3).
-    // Old backups (version 2, or a bare recipe array) are still accepted.
-    const payload = (brandPantry.length || pantryItems.length ? { version: 3, recipes: recipes, brandPantry: brandPantry, pantryItems: pantryItems } : recipes);
+    // Batch 7: backup is version 4 (pantry items may carry barcode /
+    // per-100g / productName). Old backups (v3, v2, bare array) are
+    // still accepted on restore.
+    const payload = (brandPantry.length || pantryItems.length ? { version: 4, recipes: recipes, brandPantry: brandPantry, pantryItems: pantryItems } : recipes);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -4645,8 +5039,8 @@
     reader.onload = async function(e){
       try{
         const parsed = JSON.parse(e.target.result);
-        // Batch 6 format: {version:3, recipes:[...], brandPantry:[...], pantryItems:[...]}.
-        // Batch 5: {version:2, recipes:[...], brandPantry:[...]}.
+        // Batch 7 format: {version:4, recipes:[...], brandPantry:[...], pantryItems:[...]}.
+        // Batch 6: {version:3, ...}. Batch 5: {version:2, recipes:[...], brandPantry:[...]}.
         // Old format: a bare recipe array. All are accepted.
         const data = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.recipes) ? parsed.recipes : null);
         if (!data) throw new Error('bad format');
