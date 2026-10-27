@@ -247,6 +247,33 @@
     letter-spacing:0.02em;
   }
 
+  /* ---------- Compact recipe list on phones (batch 6b) ----------
+     The old cards were ~290px tall on a phone (4/3 thumb + info), so
+     only one recipe fit per screen. On a phone the card becomes one
+     compact row: a 72px square thumb on the left, title + meta on the
+     right. Desktop keeps the big cards. */
+  @media (max-width:720px){
+    .recipe-grid{ grid-template-columns:1fr; gap:10px; }
+    /* Batch 6b: the Pantry button pushed the header controls onto an
+       extra row (+46px), which pushed the recipe detail's ingredients
+       below the fold. Tighten the header controls on phones — smaller
+       button/chip padding, no decorative icons on the finder buttons —
+       so the row count stays what it was before the Pantry button. */
+    .controls-row{ gap:8px; margin-top:12px; }
+    .cook-finder-btn{ padding:8px 12px; font-size:0.8rem; }
+    .cook-finder-btn svg{ display:none; }
+    .sort-select{ padding:7px 24px 7px 10px; font-size:0.8rem; }
+    .chip{ padding:7px 11px; }
+    .search-wrap input{ padding:9px 16px 9px 40px; }
+    .recipe-card{ display:flex; align-items:center; gap:12px; padding:10px 12px; }
+    .recipe-card .thumb-wrap{ width:72px; height:72px; flex:0 0 72px; aspect-ratio:auto; border-radius:8px; }
+    .recipe-card .thumb-placeholder .icon{ width:26px; height:26px; }
+    .recipe-card .info{ padding:0; flex:1; min-width:0; }
+    .recipe-card .info h3{ font-size:0.98rem; margin:0 0 3px; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    .add-card{ min-height:72px; flex-direction:row; padding:10px 12px; }
+    .cat-section{ margin-bottom:24px; }
+  }
+
   .add-card{
     border:1.5px dashed var(--paper-soft);
     border-radius:12px;
@@ -441,9 +468,18 @@
   .ing-actions{ display:flex; gap:8px; flex-wrap:wrap; margin:4px 0 8px; }
   .ing-add-btn{ padding:9px 14px; font-size:0.85rem; }
   button.ing-toggle{ background:none; border:none; color:var(--ink-soft); font-size:0.8rem; text-decoration:underline; padding:4px 0; cursor:pointer; }
+  /* Batch 6b: on a phone the amount + unit + name must stay on ONE
+     line. Tight grid (amount 56, unit 84, name flex, remove 36),
+     no wrapping, small gaps — the old flex row wrapped the name
+     onto a second line because its 120px min-width didn't fit. */
   @media (max-width:520px){
-    .ing-amount{ width:64px; flex-basis:64px; }
-    .ing-unit{ width:92px; flex-basis:92px; }
+    .ing-row{ flex-wrap:nowrap; gap:6px; }
+    .ing-row:not(.ing-row-section){ display:grid; grid-template-columns:56px 84px minmax(0,1fr) 36px; align-items:center; }
+    .ing-row:not(.ing-row-section) .ing-amount{ width:100%; flex:none; padding:10px 4px; }
+    .ing-row:not(.ing-row-section) .ing-unit{ width:100%; flex:none; padding:10px 4px; font-size:0.85rem; }
+    .ing-row:not(.ing-row-section) .ing-name{ min-width:0; }
+    .ing-row:not(.ing-row-section) .ing-remove{ width:36px; height:36px; flex:none; }
+    .ing-row-section .ing-sec{ min-width:0; }
   }
 
   /* Detail view */
@@ -625,6 +661,73 @@
      and in the Cook Finder pantry panel instead. */
 
 
+  /* ---------- Pantry inventory (batch 6) ----------
+     Mobile-first: 44px+ tap targets, chips instead of dropdowns,
+     the add form sits at the top so the list never scrolls away. */
+  .pantry-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:22px; height:22px; padding:0 7px; border-radius:999px;
+    background:#A84A6B; color:#fff; font-size:0.72rem; font-weight:800;
+    font-family:var(--font-mono);
+  }
+  .pantry-summary{ font-size:0.9rem; line-height:1.55; color:var(--ink); margin:0 0 16px; }
+  .pantry-summary b{ color:var(--dessert-deep); }
+  .pantry-add{ background:var(--card-soft); border:1px solid var(--line-card); border-radius:14px; padding:16px; margin-bottom:18px; }
+  .pantry-add .field{ margin-bottom:14px; }
+  .pantry-add .field:last-child{ margin-bottom:0; }
+  .pantry-add input.plain-input{ font-size:1rem; min-height:48px; }
+  .pantry-add .btn-primary{ min-height:48px; }
+  .mini-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .mini-chip{
+    border:1.5px solid var(--line-card); background:#fff; color:var(--ink);
+    border-radius:999px; padding:10px 16px; min-height:44px;
+    font-size:0.88rem; font-weight:600; cursor:pointer;
+  }
+  .mini-chip.active{ background:var(--meal); border-color:var(--meal); color:#fff; }
+  .stepper{ display:inline-flex; align-items:center; gap:0; border:1.5px solid var(--line-card); border-radius:999px; background:#fff; overflow:hidden; }
+  .stepper-btn{
+    width:48px; height:48px; border:none; background:transparent; color:var(--ink);
+    font-size:1.4rem; font-weight:700; line-height:1; cursor:pointer; flex:none;
+  }
+  .stepper-btn:active{ background:var(--card-soft); }
+  .stepper input{
+    width:64px; border:none; text-align:center; font-size:1.05rem; font-weight:700;
+    color:var(--ink); outline:none; padding:0; background:transparent; min-height:48px;
+    -moz-appearance:textfield; appearance:textfield;
+  }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+  .stepper .stepper-unit{ font-size:0.85rem; color:var(--ink-soft); padding-right:12px; font-weight:600; white-space:nowrap; }
+  .pantry-qty-row{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .pantry-item{
+    display:flex; gap:12px; align-items:flex-start; justify-content:space-between;
+    padding:14px 0; border-bottom:1px solid var(--line-card);
+  }
+  .pantry-item:last-child{ border-bottom:none; }
+  .pantry-item-name{ font-size:1rem; font-weight:700; line-height:1.35; }
+  .pantry-item-meta{ font-size:0.82rem; color:var(--ink-soft); line-height:1.6; margin-top:3px; }
+  .pantry-item-meta input[type="date"]{
+    border:1px solid var(--line-card); border-radius:8px; background:#fff;
+    font-size:0.82rem; padding:6px 8px; min-height:44px; color:var(--ink);
+  }
+  .pantry-flag{ display:inline-block; font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.04em; padding:3px 8px; border-radius:999px; margin-left:6px; }
+  .pantry-flag.expired{ background:#F6D9DE; color:#8E2A3E; }
+  .pantry-flag.soon{ background:#FBEED3; color:#8A5A12; }
+  .pantry-flag.low{ background:#FBEED3; color:#8A5A12; }
+  .pantry-item.expired-row .pantry-item-name{ color:#8E2A3E; }
+  .pantry-stepper{ display:flex; align-items:center; gap:10px; flex:none; }
+  .pantry-remove{
+    width:44px; height:44px; border-radius:50%; border:1.5px solid var(--line-card);
+    background:transparent; color:var(--ink-soft); font-size:1.05rem; line-height:1; cursor:pointer; flex:none;
+  }
+  .pantry-remove:hover{ border-color:var(--dessert); color:var(--dessert); }
+  .pantry-empty{ font-size:0.9rem; color:var(--ink-soft); line-height:1.6; }
+  .pantry-add-pantry-btn{ background:none; border:none; color:var(--meal-deep); font-weight:700; padding:2px 6px; flex:none; font-size:0.85rem; cursor:pointer; }
+  .pantry-add-pantry-btn:hover{ text-decoration:underline; }
+  @media (max-width:520px){
+    .pantry-item{ flex-wrap:wrap; }
+    .pantry-stepper{ width:100%; justify-content:flex-start; }
+  }
+
   /* ---------- Full-page recipe view (Layout A, batch 3) ---------- */
   .detail-page{ animation:rise 0.3s ease forwards; }
   .detail-back{
@@ -732,6 +835,10 @@
       <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
       What can I cook?
     </button>
+    <button class="cook-finder-btn" id="open-pantry-btn" style="background:var(--meal); color:#fff;" title="What's in your pantry">
+      <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M5 8h14l-1.2 10.2a2 2 0 0 1-2 1.8H8.2a2 2 0 0 1-2-1.8L5 8z"/><path d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8"/></svg>
+      Pantry <span class="pantry-badge" id="pantry-badge" style="display:none;"></span>
+    </button>
     <button class="cook-finder-btn" id="tonight-btn" title="Can't decide? Get one pick for tonight">
       <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg>
       Tonight
@@ -762,6 +869,13 @@
     </button>
     <div class="panel-scroll">
       <form id="recipe-form">
+        <div id="draft-banner" style="display:none; background:#FBEED3; border:1px solid #E8C468; border-radius:10px; padding:12px 14px; margin-bottom:16px; font-size:0.88rem; line-height:1.5;">
+          <b>Unsaved draft</b> <span id="draft-banner-when"></span> &mdash; your last unsaved recipe is still here (text only; photos aren&rsquo;t kept in drafts).
+          <span style="display:flex; gap:8px; margin-top:10px;">
+            <button type="button" class="btn-primary" id="draft-resume" style="padding:9px 16px; font-size:0.85rem;">Resume draft</button>
+            <button type="button" class="btn-secondary" id="draft-discard" style="padding:9px 16px; font-size:0.85rem;">Discard draft</button>
+          </span>
+        </div>
         <div class="field">
           <input class="title-input" id="field-title" placeholder="Recipe name" required>
         </div>
@@ -861,16 +975,17 @@
     </button>
     <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
       <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">What can I cook?</h2>
-      <p class="finder-intro">List what's in your pantry, set how much time you've got, or both — I'll rank your saved recipes by fit. This is plain ingredient-name matching, not real AI, so treat it as a rough guide.</p>
+      <p class="finder-intro">Your pantry is used automatically — no typing needed. Set how much time you've got, or just tap Find matches, and I'll rank your saved recipes by fit. This is plain ingredient-name matching, not real AI, so treat it as a rough guide.</p>
+      <div class="hint" id="finder-pantry-auto" style="margin:0 0 14px; font-size:0.86rem;"></div>
       <div class="field">
         <label>Always-have staples</label>
         <input type="text" class="plain-area" id="finder-staples" placeholder="salt, pepper, water, oil" style="min-height:auto; padding:10px 14px;">
         <div class="hint">Assumed available — won't count as missing. Saved for next time.</div>
       </div>
       <div class="field">
-        <label>Pantry ingredients</label>
+        <label>Extra items (not in your pantry)</label>
         <textarea class="plain-area" id="finder-pantry" placeholder="chicken thighs, garlic, rice, soy sauce..." style="min-height:70px;"></textarea>
-        <div class="hint">Comma or line separated. Leave blank to ignore.</div>
+        <div class="hint">Your pantry is used automatically. Add anything extra here — comma or line separated.</div>
         <button type="button" class="btn-secondary" id="finder-scan-btn" style="margin-top:8px;">Scan a barcode — save a packet to your brand pantry</button>
       </div>
       <div class="field">
@@ -879,6 +994,68 @@
       </div>
       <button type="button" class="btn-primary" id="finder-run" style="width:100%;">Find matches</button>
       <div id="finder-results" style="margin-top:20px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Pantry inventory modal (batch 6) -->
+<div class="overlay" id="pantry-overlay">
+  <div class="panel" style="max-width:620px;">
+    <button class="panel-close" id="pantry-close" aria-label="Close">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="panel-scroll" style="padding:44px 28px 28px 28px;">
+      <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">My pantry</h2>
+      <p class="pantry-summary" id="pantry-summary"></p>
+      <div class="pantry-add">
+        <div class="field">
+          <label for="pantry-name">Item name</label>
+          <input type="text" class="plain-input" id="pantry-name" placeholder="e.g. Chicken breast" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <div class="pantry-qty-row">
+            <span class="stepper">
+              <button type="button" class="stepper-btn" id="pantry-qty-minus" aria-label="Less">&minus;</button>
+              <input type="number" id="pantry-qty" value="1" min="0" step="any" inputmode="decimal" aria-label="Quantity">
+              <button type="button" class="stepper-btn" id="pantry-qty-plus" aria-label="More">+</button>
+              <span class="stepper-unit" id="pantry-unit-label">pieces</span>
+            </span>
+          </div>
+          <div class="mini-chips" id="pantry-unit-chips" style="margin-top:10px;">
+            <button type="button" class="mini-chip" data-unit="g">g</button>
+            <button type="button" class="mini-chip" data-unit="kg">kg</button>
+            <button type="button" class="mini-chip" data-unit="ml">ml</button>
+            <button type="button" class="mini-chip" data-unit="l">l</button>
+            <button type="button" class="mini-chip active" data-unit="pieces">pieces</button>
+            <button type="button" class="mini-chip" data-unit="bottle">bottle</button>
+            <button type="button" class="mini-chip" data-unit="can">can</button>
+            <button type="button" class="mini-chip" data-unit="pack">pack</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Where is it?</label>
+          <div class="mini-chips" id="pantry-loc-chips">
+            <button type="button" class="mini-chip active" data-loc="pantry">Pantry</button>
+            <button type="button" class="mini-chip" data-loc="fridge">Fridge</button>
+            <button type="button" class="mini-chip" data-loc="freezer">Freezer</button>
+            <button type="button" class="mini-chip" data-loc="spice">Spice</button>
+          </div>
+        </div>
+        <div class="field-row" style="margin-bottom:14px;">
+          <div class="field" style="flex:1; margin-bottom:0;">
+            <label for="pantry-expiry">Use by (optional)</label>
+            <input type="date" class="plain-input" id="pantry-expiry" style="min-height:48px;">
+          </div>
+          <div class="field" style="flex:0 0 110px; margin-bottom:0;">
+            <label for="pantry-low">Low at</label>
+            <input type="number" class="plain-input" id="pantry-low" value="1" min="0" step="any" inputmode="decimal" style="min-height:48px;">
+          </div>
+        </div>
+        <button type="button" class="btn-primary" id="pantry-add-btn" style="width:100%;">Add to pantry</button>
+        <div class="hint">Two taps after the name: pick a unit if it isn't pieces, tap Add. Quantities and expiry dates can be changed right in the list below.</div>
+      </div>
+      <div id="pantry-list"></div>
     </div>
   </div>
 </div>
@@ -1341,6 +1518,7 @@
 
   // ---------- Rendering ----------
   function render(){
+    updatePantryBadge(); // batch 6: expiry badge lives on the Pantry button
     const total = recipes.length;
     const modeSuffix = storageMode !== 'memory' ? ' · saved in this browser' : ' · this session only';
     $('#recipe-count').textContent = total === 0
@@ -1618,8 +1796,16 @@
     ingRenderRows([]);
     hideCropEditor();
     setSelectedCat(selectedCat);
+    editSnapshot = formSnapshot();
+    maybeShowDraftBanner(null);
     editOverlay.classList.add('open');
-    setTimeout(function(){ $('#field-title').focus(); }, 80);
+    // Batch 6b: focus synchronously, inside the tap that opened the form.
+    // The old 80ms setTimeout fired AFTER the user (or a test) had
+    // already moved into an ingredient field, stealing focus back to
+    // the title mid-typing — typed text landed in the title instead of
+    // the ingredient. It also broke the iOS keyboard (a delayed focus
+    // is no longer inside the tap gesture).
+    $('#field-title').focus();
   }
 
   function openEditModal(recipe){
@@ -1641,6 +1827,8 @@
     if (recipe.image) showCropEditor(recipe.image, recipe.imageFocus);
     else hideCropEditor();
     setSelectedCat(selectedCat);
+    editSnapshot = formSnapshot();
+    maybeShowDraftBanner(recipe.id);
     editOverlay.classList.add('open');
   }
 
@@ -1648,10 +1836,121 @@
     editOverlay.classList.remove('open');
   }
 
+  // ---------- Edit draft autosave (batch 6b) ----------
+  // Tapping outside the edit panel used to close it and silently lose
+  // the recipe being typed. Outside-tap close is gone (see below), and
+  // as a second net the in-progress form autosaves to localStorage on
+  // every change, so a refresh or an accidental close still leaves a
+  // "Resume draft" banner next time the form opens. Photos are NOT in
+  // the draft (a dataURL would blow the localStorage budget); text is.
+  const DRAFT_KEY = 'plateful-edit-draft';
+  let draftTimer = null;
+  let editSnapshot = '';
+  function collectDraft(){
+    let ingredients;
+    try{ ingredients = (ingMode === 'text') ? $('#field-ingredients').value.split('\n').map(function(s){ return s.trim(); }).filter(Boolean) : ingCollectLines(); }
+    catch(e){ ingredients = []; }
+    return {
+      editingId: editingId, title: $('#field-title').value, time: $('#field-time').value,
+      servings: $('#field-servings').value, calories: $('#field-calories').value,
+      protein: $('#field-protein').value, carbs: $('#field-carbs').value, fat: $('#field-fat').value,
+      category: selectedCat, ingredients: ingredients, steps: $('#field-steps').value,
+      notes: $('#field-notes').value, savedAt: Date.now()
+    };
+  }
+  function draftHasContent(d){
+    return !!(d && (String(d.title || '').trim() || (d.ingredients || []).some(function(l){ return String(l || '').trim(); }) || String(d.steps || '').trim() || String(d.notes || '').trim()));
+  }
+  function saveDraft(){
+    if (!editOverlay.classList.contains('open')) return;
+    const d = collectDraft();
+    try{
+      if (!draftHasContent(d)){
+        // Empty form: only clear the stored draft if the user emptied
+        // it themselves (it differs from the open snapshot). A freshly
+        // opened empty form must NEVER wipe a draft that is being
+        // offered for resume — the open itself schedules a save via
+        // setSelectedCat, and that save used to delete the draft
+        // before Resume could be tapped.
+        if (formSnapshot() !== editSnapshot) window.localStorage.removeItem(DRAFT_KEY);
+      } else {
+        window.localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+      }
+    }catch(e){ /* best effort — a full localStorage must never block typing */ }
+  }
+  function scheduleDraftSave(){
+    clearTimeout(draftTimer);
+    draftTimer = setTimeout(saveDraft, 250);
+  }
+  function loadDraft(){
+    try{ const d = JSON.parse(window.localStorage.getItem(DRAFT_KEY) || 'null'); return (d && typeof d === 'object') ? d : null; }
+    catch(e){ return null; }
+  }
+  function clearDraft(){ try{ window.localStorage.removeItem(DRAFT_KEY); }catch(e){ /* best effort */ } }
+  function hideDraftBanner(){ const b = $('#draft-banner'); if (b) b.style.display = 'none'; }
+  function maybeShowDraftBanner(forEditingId){
+    const d = loadDraft();
+    const banner = $('#draft-banner');
+    if (!banner) return;
+    // Offer the draft only for the form it belongs to: a new recipe, or
+    // an edit of the same recipe it was started on.
+    if (d && draftHasContent(d) && (d.editingId || null) === (forEditingId || null)){
+      const when = $('#draft-banner-when');
+      if (when) when.textContent = d.savedAt ? ('from ' + (formatRelativeTime(d.savedAt) || 'earlier')) : '';
+      banner.style.display = '';
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+  function resumeDraft(){
+    const d = loadDraft();
+    if (!d) return;
+    $('#field-title').value = d.title || '';
+    $('#field-time').value = d.time || '';
+    $('#field-servings').value = d.servings || '';
+    $('#field-calories').value = d.calories || '';
+    $('#field-protein').value = d.protein || '';
+    $('#field-carbs').value = d.carbs || '';
+    $('#field-fat').value = d.fat || '';
+    setSelectedCat(d.category || 'meal');
+    ingSetMode('rows');
+    ingRenderRows(d.ingredients || []);
+    $('#field-ingredients').value = (d.ingredients || []).join('\n');
+    $('#field-steps').value = d.steps || '';
+    $('#field-notes').value = d.notes || '';
+    hideDraftBanner();
+    editSnapshot = formSnapshot(); // resumed state is the new baseline: no confirm unless edited further
+    showToast('Draft restored');
+  }
+  // Snapshot of the form as opened; Cancel/X only asks when the form
+  // has actually changed since then.
+  function formSnapshot(){
+    let ingredients = '';
+    try{ ingredients = (ingMode === 'text') ? $('#field-ingredients').value : ingCollectLines().join('\n'); }
+    catch(e){ ingredients = ''; }
+    return JSON.stringify({
+      title: $('#field-title').value, time: $('#field-time').value, servings: $('#field-servings').value,
+      cal: $('#field-calories').value, pro: $('#field-protein').value, carb: $('#field-carbs').value, fat: $('#field-fat').value,
+      mode: ingMode, ingredients: ingredients, steps: $('#field-steps').value, notes: $('#field-notes').value,
+      cat: selectedCat, hasImage: !!pendingImage
+    });
+  }
+  function editFormDirty(){
+    return editOverlay.classList.contains('open') && formSnapshot() !== editSnapshot;
+  }
+  function attemptCloseEditModal(){
+    if (editFormDirty()){
+      if (!confirm('Discard this recipe? Everything you typed here will be lost.')) return;
+      clearDraft();
+    }
+    closeEditModal();
+  }
+
   function setSelectedCat(cat){
     selectedCat = cat;
     $$('.cat-pill').forEach(function(p){ p.classList.toggle('selected', p.dataset.cat === cat); });
     $('#edit-stripe').className = 'panel-stripe ' + cat;
+    scheduleDraftSave();
   }
 
   // Crop/reposition editor. Rather than baking one fixed crop into the
@@ -1847,15 +2146,28 @@
     saveBtn.disabled = false; saveBtn.textContent = 'Save recipe';
 
     if (ok){
+      clearDraft();
+      hideDraftBanner();
       closeEditModal();
       render();
       showToast(editingId ? 'Recipe updated' : 'Recipe added');
     }
   });
 
-  $('#cancel-btn').addEventListener('click', closeEditModal);
-  $('#edit-close').addEventListener('click', closeEditModal);
-  editOverlay.addEventListener('click', function(e){ if (e.target === editOverlay) closeEditModal(); });
+  // Batch 6b: Cancel / X ask first when the form changed, and tapping
+  // outside the panel NEVER closes it — that was silently losing whole
+  // recipes. Only Cancel / X / Save close the form now.
+  $('#cancel-btn').addEventListener('click', attemptCloseEditModal);
+  $('#edit-close').addEventListener('click', attemptCloseEditModal);
+  $('#draft-resume').addEventListener('click', resumeDraft);
+  $('#draft-discard').addEventListener('click', function(){ clearDraft(); hideDraftBanner(); showToast('Draft discarded'); });
+  form.addEventListener('input', function(){
+    scheduleDraftSave();
+    // Once the user starts typing a new recipe, the offered draft is
+    // superseded (the autosave now holds the new text instead).
+    if (editFormDirty()) hideDraftBanner();
+  });
+  form.addEventListener('change', scheduleDraftSave);
 
   $('#open-add-btn').addEventListener('click', function(){ openAddModal(activeFilter !== 'all' ? activeFilter : 'meal'); });
   $('#fab-add').addEventListener('click', function(){ openAddModal(activeFilter !== 'all' ? activeFilter : 'meal'); });
@@ -2041,7 +2353,25 @@
       rec.lastCookedAt = Date.now();
       rec.updatedAt = Date.now(); // batch 4: cooked history syncs too
       const ok = await persist();
-      if (ok){ openDetail(rec.id); showToast('Logged as cooked just now'); }
+      if (!ok) return;
+      // Batch 6: offer (never force) to take the used amounts out of the
+      // pantry. Only exact, safe matches are offered — same mass/volume
+      // family, enough on hand, one matching item. Anything fuzzy is
+      // skipped silently rather than deducted wrong.
+      const cands = deductCandidates(rec);
+      if (cands.length){
+        const lines = cands.map(function(c){
+          return '\u2022 ' + c.item.name + ': use ' + c.need + ' ' + c.needUnit + ' (have ' + formatPantryQty(c.item) + ')';
+        }).join('\n');
+        if (confirm('Take these out of your pantry?\n\n' + lines + '\n\nOK uses them up, Cancel leaves your pantry as it is.')){
+          await deductFromPantry(cands);
+          openDetail(rec.id);
+          showToast('Logged as cooked \u2014 pantry updated');
+          return;
+        }
+      }
+      openDetail(rec.id);
+      showToast('Logged as cooked just now');
     });
 
     window.scrollTo(0, 0);
@@ -2070,8 +2400,10 @@
     if (e.key === 'Escape'){
       if ($('#photo-overlay').classList.contains('open')){ closePhotoOverlay(); return; }
       closeDetail();
-      closeEditModal();
+      attemptCloseEditModal();
       finderOverlay.classList.remove('open');
+      const pantryOv = $('#pantry-overlay');
+      if (pantryOv) pantryOv.classList.remove('open');
       tonightOverlay.classList.remove('open');
       nutritionOverlay.classList.remove('open');
     }
@@ -2253,18 +2585,31 @@
     return { raw: raw, quantity: quantity, unit: unit, ingredient: ingredient, optional: optional, alternatives: alternatives };
   }
 
-  function ingredientStatus(parsed, pantryCores, stapleCores){
+  // Batch 6: onHand is the pantry quantity ("500 g") when a live (not
+  // expired) inventory item matches the ingredient by name. Staples are
+  // assumed available but have no quantity to show.
+  function ingredientStatus(parsed, pantryCores, stapleCores, pantryLive){
     const inPantry = parsed.alternatives.some(function(a){ return coreInList(a, pantryCores); });
     const isStaple = !inPantry && parsed.alternatives.some(function(a){ return coreInList(a, stapleCores); });
-    return { have: inPantry || isStaple, staple: isStaple, optional: parsed.optional, raw: parsed.raw };
+    let onHand = null;
+    if (inPantry && pantryLive){
+      for (let i = 0; i < pantryLive.length; i++){
+        const core = toCore(pantryLive[i].name);
+        if (parsed.alternatives.some(function(a){ return coresMatch(a, core); })){
+          onHand = formatPantryQty(pantryLive[i]);
+          break;
+        }
+      }
+    }
+    return { have: inPantry || isStaple, staple: isStaple, optional: parsed.optional, raw: parsed.raw, onHand: onHand };
   }
 
-  function scoreRecipe(recipe, pantryCores, stapleCores){
+  function scoreRecipe(recipe, pantryCores, stapleCores, pantryLive){
     const parsed = flattenLines(recipe.ingredients).map(parseIngredientLine);
     const required = parsed.filter(function(p){ return !p.optional; });
     const optionalList = parsed.filter(function(p){ return p.optional; });
-    const requiredStatuses = required.map(function(p){ return ingredientStatus(p, pantryCores, stapleCores); });
-    const optionalStatuses = optionalList.map(function(p){ return ingredientStatus(p, pantryCores, stapleCores); });
+    const requiredStatuses = required.map(function(p){ return ingredientStatus(p, pantryCores, stapleCores, pantryLive); });
+    const optionalStatuses = optionalList.map(function(p){ return ingredientStatus(p, pantryCores, stapleCores, pantryLive); });
     const matched = requiredStatuses.filter(function(s){ return s.have; }).length;
     const pct = required.length ? matched / required.length : 1;
     return { pct: pct, matched: matched, total: required.length, required: requiredStatuses, optional: optionalStatuses };
@@ -2313,7 +2658,8 @@
       const cls = s.have ? 'have' : 'missing';
       const mark = s.have ? '✓' : '⚠';
       let note = '';
-      if (s.staple) note = ' <span class="tag-note">(staple)</span>';
+      if (s.onHand) note = ' <span class="tag-note">(on hand: ' + escapeHtml(s.onHand) + ')</span>';
+      else if (s.staple) note = ' <span class="tag-note">(staple)</span>';
       else if (optional) note = ' <span class="tag-note">(optional)</span>';
       const prefix = (!s.have && !optional) ? 'missing ' : '';
       return '<li class="ing-check-item ' + cls + (optional ? ' optional-item' : '') + '">' +
@@ -2330,14 +2676,19 @@
       return;
     }
 
-    const pantryText = $('#finder-pantry').value.trim();
+    // Batch 6: the pantry inventory is the default — the free-text box
+    // is now only "extra items". Expired stock never counts as "have".
+    const extraText = $('#finder-pantry').value.trim();
     const staplesText = $('#finder-staples').value.trim();
     saveStaples(staplesText);
-    savePantry(pantryText);
+    savePantry(extraText);
 
     const timeRaw = parseInt($('#finder-time').value, 10);
     const maxTime = (!isNaN(timeRaw) && timeRaw > 0) ? timeRaw : null;
-    const pantryCores = pantryText ? tokenizeToCores(pantryText) : [];
+    const pantryLive = pantryLiveItems();
+    const pantryCores = pantryInventoryCores();
+    const extraCores = extraText ? tokenizeToCores(extraText) : [];
+    extraCores.forEach(function(c){ if (pantryCores.indexOf(c) === -1) pantryCores.push(c); });
     const stapleCores = staplesText ? tokenizeToCores(staplesText) : [];
     const hasPantryIntent = pantryCores.length > 0;
 
@@ -2349,7 +2700,7 @@
     }
 
     let withScores = pool.map(function(r){
-      return { r: r, s: hasPantryIntent ? scoreRecipe(r, pantryCores, stapleCores) : null };
+      return { r: r, s: hasPantryIntent ? scoreRecipe(r, pantryCores, stapleCores, pantryLive) : null };
     });
 
     withScores.sort(function(a,b){
@@ -2400,9 +2751,10 @@
   $('#open-finder-btn').addEventListener('click', function(){
     $('#finder-staples').value = loadStaples();
     $('#finder-pantry').value = loadPantry();
+    updateFinderPantryNote();
     finderOverlay.classList.add('open');
     renderFinderResults();
-    setTimeout(function(){ $('#finder-pantry').focus(); }, 80);
+    $('#finder-pantry').focus(); // batch 6b: synchronous, same focus-steal race as the edit form
   });
   $('#finder-close').addEventListener('click', function(){ finderOverlay.classList.remove('open'); });
   finderOverlay.addEventListener('click', function(e){ if (e.target === finderOverlay) finderOverlay.classList.remove('open'); });
@@ -3089,7 +3441,9 @@
   });
 
   $('#nutrition-close').addEventListener('click', function(){ nutritionOverlay.classList.remove('open'); });
-  nutritionOverlay.addEventListener('click', function(e){ if (e.target === nutritionOverlay) nutritionOverlay.classList.remove('open'); });
+  // Batch 6b: no outside-tap close here either — the estimator holds a
+  // half-typed serving count and an unsaved estimate. The X button closes it.
+
   $('#fdc-key').addEventListener('change', function(){ setFdcKey(this.value.trim()); });
   $('#nutrition-reset-cache').addEventListener('click', async function(){
     nutritionCache = {};
@@ -3390,7 +3744,7 @@
   }
   function rowForPantry(userId, at){
     return { user_id: userId, id: PANTRY_ROW_ID, kind: 'pantry',
-      data: { staples: loadStaples(), pantryLast: loadPantry(), brandPantry: brandPantry, updatedAt: at },
+      data: { staples: loadStaples(), pantryLast: loadPantry(), brandPantry: brandPantry, pantryItems: pantryItems, updatedAt: at },
       updated_at: new Date(at).toISOString(), deleted: false };
   }
 
@@ -3423,6 +3777,11 @@
           if (Array.isArray(pantryRow.data.brandPantry)){
             brandPantry = pantryRow.data.brandPantry.map(normalizeBrandItem).filter(Boolean);
             await saveBrandPantryLocal(); // raw save: no touchPantry here, the timestamp is set below
+          }
+          if (Array.isArray(pantryRow.data.pantryItems)){
+            pantryItems = pantryRow.data.pantryItems.map(normalizePantryItem).filter(Boolean);
+            await savePantryItemsLocal(); // raw save: no touchPantry here, the timestamp is set below
+            renderPantryList();
           }
           lsSet(SYNC_PANTRY_AT_KEY, String(remoteAt));
           changed = true;
@@ -3529,7 +3888,9 @@
   // Sync panel wiring
   $('#sync-btn').addEventListener('click', openSyncPanel);
   $('#sync-close').addEventListener('click', closeSyncPanel);
-  $('#sync-overlay').addEventListener('click', function(e){ if (e.target === $('#sync-overlay')) closeSyncPanel(); });
+  // Batch 6b: no outside-tap close here either — the panel holds the
+  // typed Supabase URL, key, email and password. The X button closes it.
+
   $('#sync-signin').addEventListener('click', async function(){
     const url = $('#sync-url').value.trim(), anon = $('#sync-anon').value.trim();
     const email = $('#sync-email').value.trim(), password = $('#sync-password').value;
@@ -3608,7 +3969,7 @@
     const el = $('#brand-pantry-list');
     if (!el) return;
     if (!brandPantry.length){ el.innerHTML = '<div class="hint">Nothing scanned yet.</div>'; return; }
-    el.innerHTML = brandPantry.map(function(it){
+    el.innerHTML = brandPantry.map(function(it, idx){
       const pg = it.per100g || {};
       const macros = (pg.calories != null ? Math.round(pg.calories) + ' kcal' : '?') +
         (pg.protein != null ? ' · ' + pg.protein + 'g protein' : '') +
@@ -3619,7 +3980,9 @@
         '<div class="brand-meta">' + escapeHtml(macros) +
         (it.barcode ? ' · barcode ' + escapeHtml(it.barcode) : '') +
         (it.quantity ? ' · ' + escapeHtml(it.quantity) : '') + '</div></div>' +
-        '<button type="button" class="brand-remove" data-barcode="' + escapeHtml(it.barcode) + '" aria-label="Remove">Remove</button></div>';
+        '<div style="display:flex; gap:2px; flex:none;">' +
+        '<button type="button" class="pantry-add-pantry-btn" data-idx="' + idx + '">Add to pantry</button>' +
+        '<button type="button" class="brand-remove" data-barcode="' + escapeHtml(it.barcode) + '" aria-label="Remove">Remove</button></div></div>';
     }).join('');
   }
   function showBarcodeAddForm(barcode, prefill){
@@ -3690,10 +4053,15 @@
     lastOffItem = item;
     resultEl.innerHTML = barcodeResultHtml(item) +
       '<button type="button" class="btn-primary" id="barcode-save" style="width:100%; margin-top:10px;">Save to my brand pantry</button>' +
+      '<button type="button" class="btn-secondary" id="barcode-add-pantry" style="width:100%; margin-top:8px;">Add this to my pantry</button>' +
       '<div class="hint">Saved brands sync to your other device with the pantry. The estimator will use these label values for this product from now on.</div>';
     const saveBtn = $('#barcode-save');
     if (saveBtn) saveBtn.addEventListener('click', async function(){
       if (await saveScannedItem(item)) showToast('Saved to your brand pantry — ' + item.name);
+    });
+    const addPantryBtn = $('#barcode-add-pantry');
+    if (addPantryBtn) addPantryBtn.addEventListener('click', async function(){
+      if (await saveScannedItem(item)) openPantryForBrandItem(item);
     });
     return item;
   }
@@ -3878,16 +4246,381 @@
   $('#off-submit').addEventListener('click', function(){ submitToOff(false); });
   $('#off-save-local').addEventListener('click', function(){ submitToOff(true); });
   $('#brand-pantry-list').addEventListener('click', function(e){
+    const addBtn = e.target.closest('.pantry-add-pantry-btn');
+    if (addBtn && addBtn.dataset.idx != null){
+      const item = brandPantry[parseInt(addBtn.dataset.idx, 10)];
+      if (item) openPantryForBrandItem(item);
+      return;
+    }
     const btn = e.target.closest('.brand-remove');
     if (btn && btn.dataset.barcode) removeBrandItem(btn.dataset.barcode);
   });
 
+  // =====================================================================
+  // Pantry inventory (batch 6)
+  //
+  // A real inventory with quantities and expiry, not a free-text box:
+  // each item has a name, quantity + unit, location (pantry / fridge /
+  // freezer / spice), an optional use-by date, and a low-stock threshold.
+  // Stored in IndexedDB (localStorage fallback) under PANTRY_ITEMS_KEY,
+  // and synced through the existing pantry row (batch 4) — whole-row
+  // last-write-wins, same as the staples / brand pantry. No new table.
+  // The Cook Finder reads the live inventory automatically; the old
+  // free-text box is now just "extra items". Expired items never count
+  // as "have" in the finder. Mobile-first: 44px+ tap targets, chips
+  // instead of dropdowns, one-tap steppers and remove.
+  // =====================================================================
+  const PANTRY_ITEMS_KEY = 'pantry-inventory-data';
+  const PANTRY_UNITS = ['g','kg','ml','l','pieces','bottle','can','pack'];
+  const PANTRY_LOCS = ['pantry','fridge','freezer','spice'];
+  const PANTRY_LOC_LABEL = { pantry:'Pantry', fridge:'Fridge', freezer:'Freezer', spice:'Spice' };
+  let pantryItems = [];
+  let pantryUnit = 'pieces';
+  let pantryLoc = 'pantry';
+
+  function normalizePantryItem(raw){
+    if (!raw || typeof raw !== 'object') return null;
+    const name = String(raw.name || '').trim();
+    if (!name) return null;
+    const qty = (typeof raw.qty === 'number' && isFinite(raw.qty) && raw.qty >= 0) ? raw.qty : 1;
+    const unit = PANTRY_UNITS.indexOf(raw.unit) > -1 ? raw.unit : 'pieces';
+    const loc = PANTRY_LOCS.indexOf(raw.location) > -1 ? raw.location : 'pantry';
+    const expiry = (typeof raw.expiry === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.expiry)) ? raw.expiry : '';
+    const lowAt = (typeof raw.lowAt === 'number' && isFinite(raw.lowAt) && raw.lowAt >= 0) ? raw.lowAt : 1;
+    return {
+      id: String(raw.id || ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2,8))),
+      name: name, qty: qty, unit: unit, location: loc, expiry: expiry, lowAt: lowAt,
+      createdAt: (typeof raw.createdAt === 'number' ? raw.createdAt : Date.now()),
+      updatedAt: (typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now())
+    };
+  }
+  async function loadPantryItems(){
+    let v;
+    if (storageMode === 'idb') v = await idbGet(PANTRY_ITEMS_KEY);
+    else { try{ v = JSON.parse(window.localStorage.getItem(PANTRY_ITEMS_KEY) || 'null'); }catch(e){ v = null; } }
+    pantryItems = Array.isArray(v) ? v.map(normalizePantryItem).filter(Boolean) : [];
+    return pantryItems;
+  }
+  async function savePantryItemsLocal(){
+    if (storageMode === 'idb') await idbSet(PANTRY_ITEMS_KEY, pantryItems);
+    else { try{ window.localStorage.setItem(PANTRY_ITEMS_KEY, JSON.stringify(pantryItems)); }catch(e){ /* best effort */ } }
+  }
+  async function savePantryItems(){
+    await savePantryItemsLocal();
+    touchPantry(); // rides the pantry sync row — a change is a pantry change
+    scheduleSync();
+  }
+
+  // Days from today (local midnight) to the use-by date. null = no date.
+  function pantryDaysLeft(expiry){
+    if (!expiry) return null;
+    const parts = expiry.split('-');
+    const exp = new Date(parseInt(parts[0],10), parseInt(parts[1],10)-1, parseInt(parts[2],10));
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((exp - today) / 86400000);
+  }
+  function pantryStatus(it){
+    const d = pantryDaysLeft(it.expiry);
+    return { days: d, expired: (d !== null && d < 0), soon: (d !== null && d >= 0 && d <= 3), low: it.qty <= it.lowAt };
+  }
+  function pantryExpiryText(it){
+    const st = pantryStatus(it);
+    if (st.days === null) return 'no expiry';
+    if (st.days < 0) return 'expired ' + (-st.days) + (st.days === -1 ? ' day ago' : ' days ago');
+    if (st.days === 0) return 'expires today';
+    if (st.days === 1) return 'expires tomorrow';
+    return 'expires in ' + st.days + ' days';
+  }
+  function formatPantryQty(it){
+    return (Math.round(it.qty * 100) / 100) + ' ' + it.unit;
+  }
+  function pantryLiveItems(){ return pantryItems.filter(function(it){ return !pantryStatus(it).expired; }); }
+  function pantryInventoryCores(){
+    return pantryLiveItems().map(function(it){ return toCore(it.name); }).filter(Boolean);
+  }
+
+  function pantryCounts(){
+    let expired = 0, soon = 0, low = 0;
+    pantryItems.forEach(function(it){
+      const st = pantryStatus(it);
+      if (st.expired) expired++;
+      else if (st.soon) soon++;
+      if (st.low) low++;
+    });
+    return { total: pantryItems.length, expired: expired, soon: soon, low: low };
+  }
+  function updatePantryBadge(){
+    const el = $('#pantry-badge');
+    if (!el) return;
+    const c = pantryCounts();
+    const n = c.expired + c.soon;
+    if (n > 0){
+      el.style.display = '';
+      el.textContent = c.expired > 0 ? (c.expired + ' expired') : (c.soon + ' expiring soon');
+    } else {
+      el.style.display = 'none';
+      el.textContent = '';
+    }
+  }
+  function updateFinderPantryNote(){
+    const el = $('#finder-pantry-auto');
+    if (!el) return;
+    const live = pantryLiveItems();
+    if (!live.length){
+      el.textContent = 'Your pantry is empty \u2014 add items in the Pantry tab and they\u2019ll be used here automatically.';
+      return;
+    }
+    const names = live.slice(0, 6).map(function(it){ return it.name; }).join(', ');
+    el.textContent = 'Using your pantry: ' + live.length + ' item' + (live.length === 1 ? '' : 's') + ' on hand \u2014 ' + names + (live.length > 6 ? ', \u2026' : '') + '.';
+  }
+
+  // Expired first (most overdue on top), then expiring soon, then dated,
+  // then no-expiry items by name.
+  function sortedPantryItems(){
+    return pantryItems.slice().sort(function(a, b){
+      const sa = pantryStatus(a), sb = pantryStatus(b);
+      const rank = function(st){ return st.expired ? 0 : (st.soon ? 1 : (st.days !== null ? 2 : 3)); };
+      const ra = rank(sa), rb = rank(sb);
+      if (ra !== rb) return ra - rb;
+      if (sa.days !== null && sb.days !== null && sa.days !== sb.days) return sa.days - sb.days;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
+  function renderPantryList(){
+    const el = $('#pantry-list');
+    if (!el) return;
+    const c = pantryCounts();
+    const sum = $('#pantry-summary');
+    if (sum){
+      const bits = [c.total + (c.total === 1 ? ' item' : ' items')];
+      if (c.expired) bits.push('<b>' + c.expired + ' expired</b>');
+      if (c.soon) bits.push('<b>' + c.soon + ' expiring soon</b>');
+      if (c.low) bits.push(c.low + ' low');
+      sum.innerHTML = bits.join(' \u00b7 ') + '. Expiring-soonest is on top; the Cook Finder uses what\u2019s here automatically.';
+    }
+    if (!pantryItems.length){
+      el.innerHTML = '<p class="pantry-empty">Nothing in the pantry yet. Add what you have above \u2014 the Cook Finder will use it straight away, and you\u2019ll get a flag here when something is about to expire or running low.</p>';
+      updatePantryBadge();
+      return;
+    }
+    el.innerHTML = sortedPantryItems().map(function(it){
+      const st = pantryStatus(it);
+      const flags = (st.expired ? '<span class="pantry-flag expired">Expired</span>' : '') +
+        (!st.expired && st.soon ? '<span class="pantry-flag soon">Use soon</span>' : '') +
+        (st.low ? '<span class="pantry-flag low">Low</span>' : '');
+      return '<div class="pantry-item' + (st.expired ? ' expired-row' : '') + '" data-id="' + it.id + '">' +
+        '<div><div class="pantry-item-name">' + escapeHtml(it.name) + flags + '</div>' +
+        '<div class="pantry-item-meta">' + escapeHtml(PANTRY_LOC_LABEL[it.location]) + ' \u00b7 ' +
+        '<input type="date" class="pantry-expiry" data-id="' + it.id + '" value="' + it.expiry + '" aria-label="Use by date for ' + escapeHtml(it.name) + '"> ' +
+        escapeHtml(pantryExpiryText(it)) + '</div></div>' +
+        '<div class="pantry-stepper"><span class="stepper">' +
+        '<button type="button" class="stepper-btn pantry-minus" data-id="' + it.id + '" aria-label="Use one of ' + escapeHtml(it.name) + '">\u2212</button>' +
+        '<input type="number" class="pantry-qty-input" data-id="' + it.id + '" value="' + (Math.round(it.qty * 100) / 100) + '" min="0" step="any" inputmode="decimal" aria-label="Quantity of ' + escapeHtml(it.name) + '">' +
+        '<button type="button" class="stepper-btn pantry-plus" data-id="' + it.id + '" aria-label="Add one ' + escapeHtml(it.name) + '">+</button>' +
+        '<span class="stepper-unit">' + escapeHtml(it.unit) + '</span></span>' +
+        '<button type="button" class="pantry-remove" data-id="' + it.id + '" aria-label="Remove ' + escapeHtml(it.name) + ' \u2014 used up">\u2715</button></div>' +
+      '</div>';
+    }).join('');
+    updatePantryBadge();
+  }
+
+  function pantrySetUnit(u){
+    pantryUnit = u;
+    const label = $('#pantry-unit-label');
+    if (label) label.textContent = u;
+    $$('#pantry-unit-chips .mini-chip').forEach(function(b){ b.classList.toggle('active', b.dataset.unit === u); });
+  }
+  function pantrySetLoc(l){
+    pantryLoc = l;
+    $$('#pantry-loc-chips .mini-chip').forEach(function(b){ b.classList.toggle('active', b.dataset.loc === l); });
+  }
+  function bumpQtyInput(delta){
+    const el = $('#pantry-qty');
+    let v = parseFloat(el.value);
+    if (isNaN(v)) v = 0;
+    v = Math.max(0, v + delta);
+    el.value = String(Math.round(v * 100) / 100);
+  }
+  async function pantryAddFromForm(){
+    const name = $('#pantry-name').value.trim();
+    if (!name){ showToast('Type the item name first'); $('#pantry-name').focus(); return; }
+    let qty = parseFloat($('#pantry-qty').value);
+    if (isNaN(qty) || qty < 0) qty = 1;
+    const lowRaw = parseFloat($('#pantry-low').value);
+    const item = normalizePantryItem({
+      name: name, qty: qty, unit: pantryUnit, location: pantryLoc,
+      expiry: $('#pantry-expiry').value || '', lowAt: (isNaN(lowRaw) ? 1 : lowRaw)
+    });
+    if (!item) return;
+    // Same name + unit already on the shelf? Top it up instead of a
+    // duplicate row; the newest expiry wins.
+    const existing = pantryItems.find(function(x){ return x.name.toLowerCase() === item.name.toLowerCase() && x.unit === item.unit; });
+    if (existing){
+      existing.qty = Math.round((existing.qty + item.qty) * 100) / 100;
+      if (item.expiry) existing.expiry = item.expiry;
+      existing.updatedAt = Date.now();
+    } else {
+      pantryItems.push(item);
+    }
+    await savePantryItems();
+    renderPantryList();
+    $('#pantry-name').value = '';
+    $('#pantry-qty').value = '1';
+    $('#pantry-expiry').value = '';
+    $('#pantry-name').focus();
+    showToast(existing ? ('Topped up ' + item.name + ' \u2014 now ' + formatPantryQty(existing)) : ('Added ' + item.name + ' to your pantry'));
+  }
+  // Stepper step sized to the unit: 50 g / 50 ml, 0.5 kg / 0.5 l, 1 of
+  // anything counted (pieces, bottle, can, pack).
+  function pantryStepFor(unit){
+    if (unit === 'g' || unit === 'ml') return 50;
+    if (unit === 'kg' || unit === 'l') return 0.5;
+    return 1;
+  }
+  async function pantryAdjust(id, delta){
+    const it = pantryItems.find(function(x){ return x.id === id; });
+    if (!it) return;
+    it.qty = Math.max(0, Math.round((it.qty + delta * pantryStepFor(it.unit)) * 100) / 100);
+    it.updatedAt = Date.now();
+    await savePantryItems();
+    renderPantryList();
+  }
+  async function pantryRemove(id){
+    const it = pantryItems.find(function(x){ return x.id === id; });
+    pantryItems = pantryItems.filter(function(x){ return x.id !== id; });
+    await savePantryItems();
+    renderPantryList();
+    if (it) showToast('Removed ' + it.name + ' from your pantry');
+  }
+
+  function openPantry(prefill){
+    if (prefill){
+      if (prefill.name) $('#pantry-name').value = prefill.name;
+      if (prefill.qty != null) $('#pantry-qty').value = String(prefill.qty);
+      if (prefill.unit) pantrySetUnit(prefill.unit);
+      if (prefill.location) pantrySetLoc(prefill.location);
+      if (prefill.expiry) $('#pantry-expiry').value = prefill.expiry;
+    }
+    renderPantryList();
+    $('#pantry-overlay').classList.add('open');
+    if (!prefill) $('#pantry-name').focus(); // batch 6b: synchronous, same focus-steal race as the edit form
+  }
+  function closePantry(){ $('#pantry-overlay').classList.remove('open'); }
+
+  // "400 g", "1 L", "500g", "2 x 250 g" -> {qty, unit}; null when the
+  // pack quantity can't be parsed (falls back to 1 piece).
+  function parsePackQuantity(qtyText){
+    if (!qtyText) return null;
+    const m = String(qtyText).trim().match(/(\d+(?:\.\d+)?)\s*(g|kg|ml|l|litre|litres|gram|grams|pieces?|bottles?|cans?|packs?)\b/i);
+    if (!m) return null;
+    let unit = m[2].toLowerCase();
+    if (unit === 'gram' || unit === 'grams') unit = 'g';
+    if (unit === 'litre' || unit === 'litres') unit = 'l';
+    if (unit === 'piece') unit = 'pieces';
+    if (unit === 'bottle') unit = 'bottle';
+    if (unit === 'can') unit = 'can';
+    if (unit === 'pack') unit = 'pack';
+    return { qty: parseFloat(m[1]), unit: unit };
+  }
+  function openPantryForBrandItem(item){
+    const parsed = parsePackQuantity(item.quantity);
+    // The barcode overlay sits above the pantry overlay in the DOM, so
+    // close it first or it would cover the prefilled form.
+    if (barcodeOverlay) barcodeOverlay.classList.remove('open');
+    openPantry({ name: item.name, qty: parsed ? parsed.qty : 1, unit: parsed ? parsed.unit : 'pieces' });
+    showToast('Prefilled from ' + item.name + ' \u2014 tap Add to pantry');
+  }
+
+  // --- Cooking uses the pantry (opt-in) ---
+  // Only mass g<->kg and volume ml<->l convert. Anything else (pieces,
+  // bottle, can, tbsp, cups) must match exactly — and it doesn't, because
+  // pantry units are only ever g/kg/ml/l/pieces/bottle/can/pack, so those
+  // lines are skipped rather than guessed. A line is only offered when
+  // exactly one pantry item matches by name, the units convert, and
+  // there is at least enough on hand — never a partial deduction.
+  const DEDUCT_BASE = { gram:['mass',1], g:['mass',1], kilogram:['mass',1000], kg:['mass',1000],
+    milliliter:['vol',1], ml:['vol',1], liter:['vol',1000], l:['vol',1000] };
+  function deductCandidates(recipe){
+    const out = [];
+    flattenLines(recipe.ingredients).forEach(function(line){
+      const p = parseIngredientLine(line);
+      if (!p || p.optional || p.quantity == null || !p.unit || !p.ingredient) return;
+      const needUnit = (UNIT_ALIASES[p.unit] || p.unit);
+      const base = DEDUCT_BASE[needUnit];
+      if (!base) return;
+      for (let i = 0; i < pantryItems.length; i++){
+        const it = pantryItems[i];
+        const itBase = DEDUCT_BASE[it.unit];
+        if (!itBase || itBase[0] !== base[0]) continue;
+        if (!coresMatch(p.ingredient, toCore(it.name))) continue;
+        if (it.qty * itBase[1] < p.quantity * base[1]) return; // not enough — leave it alone
+        out.push({ item: it, need: p.quantity, needUnit: needUnit, line: line });
+        return;
+      }
+    });
+    return out;
+  }
+  async function deductFromPantry(cands){
+    cands.forEach(function(c){
+      const itBase = DEDUCT_BASE[c.item.unit];
+      const needBase = DEDUCT_BASE[c.needUnit];
+      const deductInHaveUnit = (c.need * needBase[1]) / itBase[1];
+      c.item.qty = Math.max(0, Math.round((c.item.qty - deductInHaveUnit) * 100) / 100);
+      c.item.updatedAt = Date.now();
+    });
+    await savePantryItems();
+    renderPantryList();
+  }
+
+  // ---------- Pantry overlay wiring ----------
+  $('#open-pantry-btn').addEventListener('click', function(){ openPantry(); });
+  $('#pantry-close').addEventListener('click', closePantry);
+  $('#pantry-overlay').addEventListener('click', function(e){ if (e.target === $('#pantry-overlay')) closePantry(); });
+  $('#pantry-add-btn').addEventListener('click', pantryAddFromForm);
+  $('#pantry-name').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); pantryAddFromForm(); } });
+  $('#pantry-qty-minus').addEventListener('click', function(){ bumpQtyInput(-1); });
+  $('#pantry-qty-plus').addEventListener('click', function(){ bumpQtyInput(1); });
+  $('#pantry-unit-chips').addEventListener('click', function(e){
+    const b = e.target.closest('.mini-chip'); if (b) pantrySetUnit(b.dataset.unit);
+  });
+  $('#pantry-loc-chips').addEventListener('click', function(e){
+    const b = e.target.closest('.mini-chip'); if (b) pantrySetLoc(b.dataset.loc);
+  });
+  $('#pantry-list').addEventListener('click', async function(e){
+    const minus = e.target.closest('.pantry-minus');
+    if (minus){ await pantryAdjust(minus.dataset.id, -1); return; }
+    const plus = e.target.closest('.pantry-plus');
+    if (plus){ await pantryAdjust(plus.dataset.id, 1); return; }
+    const rem = e.target.closest('.pantry-remove');
+    if (rem){ await pantryRemove(rem.dataset.id); return; }
+  });
+  $('#pantry-list').addEventListener('change', async function(e){
+    const dateEl = e.target.closest('.pantry-expiry');
+    if (dateEl){
+      const it = pantryItems.find(function(x){ return x.id === dateEl.dataset.id; });
+      if (it){ it.expiry = dateEl.value || ''; it.updatedAt = Date.now(); await savePantryItems(); renderPantryList(); }
+      return;
+    }
+    const qtyEl = e.target.closest('.pantry-qty-input');
+    if (qtyEl){
+      const it = pantryItems.find(function(x){ return x.id === qtyEl.dataset.id; });
+      if (it){
+        const v = parseFloat(qtyEl.value);
+        it.qty = (!isNaN(v) && v >= 0) ? Math.round(v * 100) / 100 : it.qty;
+        it.updatedAt = Date.now();
+        await savePantryItems(); renderPantryList();
+      }
+    }
+  });
+
   // ---------- Backup / Restore ----------
   $('#backup-btn').addEventListener('click', function(){
-    if (recipes.length === 0 && brandPantry.length === 0){ showToast('Nothing to back up yet'); return; }
-    // Batch 5: the backup now carries the brand pantry too. Old backups
-    // were a bare recipe array; the restore below still accepts those.
-    const payload = (brandPantry.length ? { version: 2, recipes: recipes, brandPantry: brandPantry } : recipes);
+    if (recipes.length === 0 && brandPantry.length === 0 && pantryItems.length === 0){ showToast('Nothing to back up yet'); return; }
+    // Batch 6: the backup now carries the pantry inventory too (version 3).
+    // Old backups (version 2, or a bare recipe array) are still accepted.
+    const payload = (brandPantry.length || pantryItems.length ? { version: 3, recipes: recipes, brandPantry: brandPantry, pantryItems: pantryItems } : recipes);
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -3912,14 +4645,25 @@
     reader.onload = async function(e){
       try{
         const parsed = JSON.parse(e.target.result);
-        // Batch 5 format: {version:2, recipes:[...], brandPantry:[...]}.
-        // Old format: a bare recipe array. Both are accepted.
+        // Batch 6 format: {version:3, recipes:[...], brandPantry:[...], pantryItems:[...]}.
+        // Batch 5: {version:2, recipes:[...], brandPantry:[...]}.
+        // Old format: a bare recipe array. All are accepted.
         const data = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.recipes) ? parsed.recipes : null);
         if (!data) throw new Error('bad format');
         if (parsed && Array.isArray(parsed.brandPantry)){
           const before = brandPantry.length;
           parsed.brandPantry.forEach(function(b){ upsertBrandItem(b); });
           if (brandPantry.length !== before) await saveBrandPantry();
+        }
+        if (parsed && Array.isArray(parsed.pantryItems)){
+          const before = pantryItems.length;
+          parsed.pantryItems.forEach(function(p){
+            const item = normalizePantryItem(p);
+            if (!item) return;
+            const idx = pantryItems.findIndex(function(x){ return x.id === item.id; });
+            if (idx > -1) pantryItems[idx] = item; else pantryItems.push(item);
+          });
+          if (pantryItems.length !== before){ await savePantryItems(); renderPantryList(); }
         }
         let added = 0, updated = 0;
         data.forEach(function(raw){
@@ -3949,6 +4693,7 @@
     $('#storage-banner').style.display = storageMode === 'memory' ? 'block' : 'none';
     recipes = (await loadRecipes()).map(normalizeRecipe);
     await loadBrandPantry(); // batch 5: scanned brands, for the estimator
+    await loadPantryItems(); // batch 6: real pantry inventory
     render();
     initSync(); // batch 4: load sync config, show status, auto-sync if signed in
   })();
