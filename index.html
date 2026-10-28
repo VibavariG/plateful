@@ -387,6 +387,16 @@
   input.plain-input:focus{ border-color:var(--ink); }
 
   .field-row{ display:flex; gap:12px; margin-bottom:18px; }
+  .field-row>*{ min-width:0; }
+  .field{ min-width:0; }
+  input.plain-input{ min-width:0; }
+  /* Batch 7b: Use-by / Low-at rows stack on phones so a date input can
+     never run under the Low-at box (its intrinsic width overflows a
+     two-column flex row at 390px). */
+  @media (max-width:720px){
+    .field-row.expiry-row{ flex-direction:column; gap:10px; }
+    .field-row.expiry-row .field{ flex:1 1 auto !important; }
+  }
   .field-row input.plain-input{ width:100%; flex:1; }
 
   .dropzone{
@@ -716,6 +726,18 @@
   .pantry-flag.soon{ background:#FBEED3; color:#8A5A12; }
   .pantry-flag.low{ background:#FBEED3; color:#8A5A12; }
   .pantry-item.expired-row .pantry-item-name{ color:#8E2A3E; }
+  /* Batch 7c: in-place editing in the pantry list. Every field captured
+     at scan/add time is editable on the row itself — tap the name to
+     rename it, tap the unit or location to cycle it, edit low-at in the
+     box. Edits save immediately and keep barcode/nutrition intact. */
+  .pantry-item-name{ cursor:pointer; }
+  .pantry-item-name:hover{ text-decoration:underline dotted; }
+  .pantry-name-input{ width:100%; box-sizing:border-box; font-size:1rem; font-weight:700; color:var(--ink); border:1px solid var(--meal); border-radius:8px; padding:8px 10px; min-height:44px; background:#fff; }
+  .pantry-unit-btn{ background:#EEF3EA; border:1px solid #DCE5D8; border-radius:999px; padding:6px 10px; font-size:0.85rem; font-weight:700; color:var(--ink); cursor:pointer; white-space:nowrap; min-height:36px; }
+  .pantry-unit-btn:hover{ border-color:var(--meal); }
+  .pantry-loc-btn{ background:transparent; border:1px solid var(--line-card); border-radius:999px; padding:2px 8px; font-size:0.82rem; color:var(--ink-soft); cursor:pointer; white-space:nowrap; }
+  .pantry-loc-btn:hover{ border-color:var(--meal); color:var(--ink); }
+  .pantry-low-input{ width:64px; border:1px solid var(--line-card); border-radius:8px; background:#fff; font-size:0.82rem; padding:6px 8px; min-height:44px; color:var(--ink); text-align:center; }
   .pantry-stepper{ display:flex; align-items:center; gap:10px; flex:none; }
   .pantry-remove{
     width:44px; height:44px; border-radius:50%; border:1.5px solid var(--line-card);
@@ -748,6 +770,17 @@
     padding:0; margin:4px 0 16px; cursor:pointer; display:inline-block;
   }
   .detail-back:hover{ text-decoration:underline; }
+  /* Batch 7b: inside a recipe the whole main header (title, sync, search,
+     filters) is hidden — only the slim back bar stays. List view is
+     untouched: body.detail-open is only set while a recipe is open. */
+  body.detail-open header{ display:none; }
+  .detail-topbar{ display:flex; justify-content:space-between; align-items:center; margin:0 0 12px; }
+  body.detail-open .detail-topbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(246,248,243,0.96); backdrop-filter:blur(10px);
+    min-height:48px; padding:2px 0; box-sizing:border-box;
+  }
+  body.detail-open .detail-back{ margin:0; padding:4px 0; }
   .detail-actions-page{ display:flex; gap:8px; float:right; }
   .detail-title{ font-family:var(--font-display); font-size:2.4rem; font-weight:700; margin:0 0 12px; line-height:1.1; color:var(--ink); }
   .detail-meta{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
@@ -1069,7 +1102,7 @@
             <button type="button" class="mini-chip" data-loc="spice">Spice</button>
           </div>
         </div>
-        <div class="field-row" style="margin-bottom:14px;">
+        <div class="field-row expiry-row" style="margin-bottom:14px;">
           <div class="field" style="flex:1; margin-bottom:0;">
             <label for="pantry-expiry">Use by (optional)</label>
             <input type="date" class="plain-input" id="pantry-expiry" style="min-height:48px;">
@@ -1079,8 +1112,9 @@
             <input type="number" class="plain-input" id="pantry-low" value="1" min="0" step="any" inputmode="decimal" style="min-height:48px;">
           </div>
         </div>
+        <button type="button" class="btn-secondary" id="pantry-scan-btn" style="width:100%; margin-bottom:8px;">&#128269; Scan a barcode — add a packet</button>
         <button type="button" class="btn-primary" id="pantry-add-btn" style="width:100%;">Add to pantry</button>
-        <div class="hint">Two taps after the name: pick a unit if it isn't pieces, tap Add. Quantities and expiry dates can be changed right in the list below.</div>
+        <div class="hint">Two taps after the name: pick a unit if it isn't pieces, tap Add. Tap the name, unit, location, quantity, expiry or low-at number right in the list below to change it — everything else on the item stays as it is.</div>
       </div>
       <div id="pantry-list"></div>
     </div>
@@ -1239,7 +1273,7 @@
             <button type="button" class="mini-chip" data-loc="spice">Spice</button>
           </div>
         </div>
-        <div class="field-row" style="margin-bottom:14px;">
+        <div class="field-row expiry-row" style="margin-bottom:14px;">
           <div class="field" style="flex:1; margin-bottom:0;"><label for="scan-expiry">Use by (optional)</label><input type="date" class="plain-input" id="scan-expiry" style="min-height:48px;"></div>
           <div class="field" style="flex:0 0 110px; margin-bottom:0;"><label for="scan-low">Low at</label><input type="number" class="plain-input" id="scan-low" value="1" min="0" step="any" inputmode="decimal" style="min-height:48px;"></div>
         </div>
@@ -1588,6 +1622,7 @@
 
   // ---------- Rendering ----------
   function render(){
+    document.body.classList.remove('detail-open'); // list view always gets the full header back
     updatePantryBadge(); // batch 6: expiry badge lives on the Pantry button
     const total = recipes.length;
     const modeSuffix = storageMode !== 'memory' ? ' · saved in this browser' : ' · this session only';
@@ -2376,6 +2411,7 @@
     const r = recipes.find(function(x){ return x.id === id; });
     if (!r) return;
     currentDetailId = id;
+    document.body.classList.add('detail-open'); // batch 7b: hide main header in detail view
     detailServings = (typeof r.servings === 'number') ? r.servings : null;
 
     const heroHtml = r.image
@@ -2419,13 +2455,13 @@
 
     mainEl.innerHTML =
       '<div class="detail-page">' +
-      '<button type="button" class="detail-back" id="detail-close">\u2190 All recipes</button>' +
+      '<div class="detail-topbar"><button type="button" class="detail-back" id="detail-close">\u2190 All recipes</button>' +
       '<div class="detail-actions-page">' +
         '<button class="icon-btn" id="detail-edit" aria-label="Edit recipe" title="Edit recipe">' +
           '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>' +
         '<button class="icon-btn danger" id="detail-delete" aria-label="Delete recipe" title="Delete recipe">' +
           '<svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px;"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg></button>' +
-      '</div>' +
+      '</div></div>' +
       '<h1 class="detail-title">' + escapeHtml(r.title) + '</h1>' +
       '<div class="detail-meta">' + metaBits.join('') + '</div>' +
       '<div class="detail-hero" id="detail-image-wrap">' + heroHtml + '</div>' +
@@ -2502,6 +2538,7 @@
   function closeDetail(){
     if (!currentDetailId) return;
     currentDetailId = null;
+    document.body.classList.remove('detail-open');
     releaseWakeLock();
     render();
   }
@@ -4540,7 +4577,8 @@
 
   // ---------- Barcode overlay wiring ----------
   // Entry points: the nutrition estimator ("Scan a barcode for this
-  // recipe") and the Cook Finder pantry panel. Deliberately NOT the
+  // recipe"), the Cook Finder pantry panel, and (batch 7b) the Pantry
+  // itself ("Scan a barcode — add a packet"). Deliberately NOT the
   // header — on a phone the extra header button wrapped the controls
   // row onto another line and pushed the recipe detail down ~46px.
   $('#finder-scan-btn').addEventListener('click', function(){
@@ -4739,6 +4777,10 @@
     });
   }
 
+  // Batch 7c: id of the pantry item whose name is being edited inline
+  // in the list (null when not editing). Set on tap of the name, cleared
+  // on save (blur/Enter) or cancel (Escape, reverts without saving).
+  let editingPantryNameId = null;
   function renderPantryList(){
     const el = $('#pantry-list');
     if (!el) return;
@@ -4770,20 +4812,32 @@
         (it.per100g.protein != null ? ' · ' + it.per100g.protein + 'g protein' : '') +
         (it.per100g.carbs != null ? ' · ' + it.per100g.carbs + 'g carbs' : '') +
         (it.per100g.fat != null ? ' · ' + it.per100g.fat + 'g fat' : '') + '</div>' : '';
+      // Batch 7c: name is tappable to rename inline; location and unit
+      // are tappable to cycle; low-at is a number box. All save
+      // immediately and leave barcode / nutrition / productName alone.
+      const nameHtml = (editingPantryNameId === it.id)
+        ? '<input type="text" class="pantry-name-input" data-id="' + it.id + '" value="' + escapeHtml(it.name) + '" aria-label="Rename ' + escapeHtml(it.name) + '">'
+        : '<div class="pantry-item-name" data-id="' + it.id + '" tabindex="0" role="button" title="Tap to rename">' + escapeHtml(it.name) + flags + '</div>';
       return '<div class="pantry-item' + (st.expired ? ' expired-row' : '') + '" data-id="' + it.id + '">' +
-        '<div><div class="pantry-item-name">' + escapeHtml(it.name) + flags + '</div>' + subHtml + macrosHtml +
-        '<div class="pantry-item-meta">' + escapeHtml(PANTRY_LOC_LABEL[it.location]) + ' \u00b7 ' +
+        '<div>' + nameHtml + subHtml + macrosHtml +
+        '<div class="pantry-item-meta">' + '<button type="button" class="pantry-loc-btn" data-id="' + it.id + '" title="Tap to change location">' + escapeHtml(PANTRY_LOC_LABEL[it.location]) + '</button> \u00b7 ' +
         '<input type="date" class="pantry-expiry" data-id="' + it.id + '" value="' + it.expiry + '" aria-label="Use by date for ' + escapeHtml(it.name) + '"> ' +
-        escapeHtml(pantryExpiryText(it)) + '</div></div>' +
+        escapeHtml(pantryExpiryText(it)) + ' \u00b7 Low at <input type="number" class="pantry-low-input" data-id="' + it.id + '" value="' + it.lowAt + '" min="0" step="any" inputmode="decimal" aria-label="Low stock threshold for ' + escapeHtml(it.name) + '"></div></div>' +
         '<div class="pantry-stepper"><span class="stepper">' +
         '<button type="button" class="stepper-btn pantry-minus" data-id="' + it.id + '" aria-label="Use one of ' + escapeHtml(it.name) + '">\u2212</button>' +
         '<input type="number" class="pantry-qty-input" data-id="' + it.id + '" value="' + (Math.round(it.qty * 100) / 100) + '" min="0" step="any" inputmode="decimal" aria-label="Quantity of ' + escapeHtml(it.name) + '">' +
         '<button type="button" class="stepper-btn pantry-plus" data-id="' + it.id + '" aria-label="Add one ' + escapeHtml(it.name) + '">+</button>' +
-        '<span class="stepper-unit">' + escapeHtml(it.unit) + '</span></span>' +
+        '<button type="button" class="pantry-unit-btn" data-id="' + it.id + '" title="Tap to change unit">' + escapeHtml(it.unit) + '</button></span>' +
         '<button type="button" class="pantry-remove" data-id="' + it.id + '" aria-label="Remove ' + escapeHtml(it.name) + ' \u2014 used up">\u2715</button></div>' +
       '</div>';
     }).join('');
     updatePantryBadge();
+    // Batch 7c: while a name is being edited, focus the input after
+    // every re-render (only if it isn't already focused).
+    if (editingPantryNameId){
+      const inp = el.querySelector('.pantry-name-input[data-id="' + editingPantryNameId + '"]');
+      if (inp && document.activeElement !== inp){ inp.focus(); inp.select(); }
+    }
   }
 
   function pantrySetUnit(u){
@@ -4969,6 +5023,13 @@
 
   // ---------- Pantry overlay wiring ----------
   $('#open-pantry-btn').addEventListener('click', function(){ openPantry(); });
+  // Batch 7b: scan from inside the Pantry itself — no recipe needed.
+  // Closes the pantry overlay, opens the barcode overlay; saving from the
+  // unified scan form returns to the pantry list (saveScanPantryForm).
+  $('#pantry-scan-btn').addEventListener('click', function(){
+    closePantry();
+    openBarcodeOverlay();
+  });
   $('#pantry-close').addEventListener('click', closePantry);
   $('#pantry-overlay').addEventListener('click', function(e){ if (e.target === $('#pantry-overlay')) closePantry(); });
   $('#pantry-add-btn').addEventListener('click', pantryAddFromForm);
@@ -4981,6 +5042,26 @@
   $('#pantry-loc-chips').addEventListener('click', function(e){
     const b = e.target.closest('.mini-chip'); if (b) pantrySetLoc(b.dataset.loc);
   });
+  // Batch 7c: in-place edits on the row. Unit and location cycle
+  // through the same choices as capture; the quantity number is kept
+  // exactly as-is when the unit changes (no silent conversion).
+  async function pantryCycleUnit(id){
+    const it = pantryItems.find(function(x){ return x.id === id; });
+    if (!it) return;
+    const old = it.unit;
+    it.unit = PANTRY_UNITS[(PANTRY_UNITS.indexOf(it.unit) + 1) % PANTRY_UNITS.length];
+    it.updatedAt = Date.now();
+    await savePantryItems(); renderPantryList();
+    showToast('Unit changed: ' + old + ' \u2192 ' + it.unit + ' \u2014 quantity kept at ' + (Math.round(it.qty * 100) / 100) + ' ' + it.unit);
+  }
+  async function pantryCycleLoc(id){
+    const it = pantryItems.find(function(x){ return x.id === id; });
+    if (!it) return;
+    it.location = PANTRY_LOCS[(PANTRY_LOCS.indexOf(it.location) + 1) % PANTRY_LOCS.length];
+    it.updatedAt = Date.now();
+    await savePantryItems(); renderPantryList();
+    showToast('Location changed to ' + PANTRY_LOC_LABEL[it.location]);
+  }
   $('#pantry-list').addEventListener('click', async function(e){
     const minus = e.target.closest('.pantry-minus');
     if (minus){ await pantryAdjust(minus.dataset.id, -1); return; }
@@ -4988,12 +5069,68 @@
     if (plus){ await pantryAdjust(plus.dataset.id, 1); return; }
     const rem = e.target.closest('.pantry-remove');
     if (rem){ await pantryRemove(rem.dataset.id); return; }
+    const unitBtn = e.target.closest('.pantry-unit-btn');
+    if (unitBtn){ await pantryCycleUnit(unitBtn.dataset.id); return; }
+    const locBtn = e.target.closest('.pantry-loc-btn');
+    if (locBtn){ await pantryCycleLoc(locBtn.dataset.id); return; }
+    const nameEl = e.target.closest('.pantry-item-name');
+    if (nameEl && !e.target.closest('.pantry-flag')){
+      editingPantryNameId = nameEl.dataset.id;
+      renderPantryList();
+      return;
+    }
+  });
+  // Keyboard: Enter/Space on the name starts editing; Enter in the name
+  // input saves (via blur), Escape cancels without saving.
+  $('#pantry-list').addEventListener('keydown', function(e){
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('pantry-item-name')){
+      e.preventDefault();
+      editingPantryNameId = e.target.dataset.id;
+      renderPantryList();
+      return;
+    }
+    if (e.target.classList && e.target.classList.contains('pantry-name-input')){
+      if (e.key === 'Enter'){ e.preventDefault(); e.target.blur(); }
+      // stopPropagation: the document-level Escape handler closes every
+      // overlay (incl. the pantry) — without this, cancelling a rename
+      // would also close the whole pantry view.
+      if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); editingPantryNameId = null; renderPantryList(); }
+    }
+  });
+  // Blur saves the renamed item (empty reverts); Escape sets
+  // editingPantryNameId to null first, so this handler ignores it.
+  $('#pantry-list').addEventListener('focusout', async function(e){
+    const inp = (e.target && e.target.closest) ? e.target.closest('.pantry-name-input') : null;
+    if (!inp) return;
+    const id = inp.dataset.id;
+    if (editingPantryNameId !== id) return;
+    const it = pantryItems.find(function(x){ return x.id === id; });
+    const v = inp.value.trim();
+    editingPantryNameId = null;
+    if (it && v && v !== it.name){
+      it.name = v; it.updatedAt = Date.now();
+      await savePantryItems();
+      showToast('Renamed to ' + v);
+    }
+    renderPantryList();
   });
   $('#pantry-list').addEventListener('change', async function(e){
     const dateEl = e.target.closest('.pantry-expiry');
     if (dateEl){
       const it = pantryItems.find(function(x){ return x.id === dateEl.dataset.id; });
       if (it){ it.expiry = dateEl.value || ''; it.updatedAt = Date.now(); await savePantryItems(); renderPantryList(); }
+      return;
+    }
+    // Batch 7c: low-at threshold, editable in place like qty/expiry.
+    const lowEl = e.target.closest('.pantry-low-input');
+    if (lowEl){
+      const it = pantryItems.find(function(x){ return x.id === lowEl.dataset.id; });
+      if (it){
+        const v = parseFloat(lowEl.value);
+        it.lowAt = (!isNaN(v) && v >= 0) ? Math.round(v * 100) / 100 : it.lowAt;
+        it.updatedAt = Date.now();
+        await savePantryItems(); renderPantryList();
+      }
       return;
     }
     const qtyEl = e.target.closest('.pantry-qty-input');
