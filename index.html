@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
 <title>Plateful</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -312,7 +312,7 @@
   .overlay{
     position:fixed; inset:0; background:rgba(15,12,10,0.72);
     display:flex; align-items:flex-start; justify-content:center;
-    padding:5vh 16px; overflow-y:auto; z-index:50;
+    padding:5vh 16px; padding:5dvh 16px; overflow-y:auto; z-index:50;
     opacity:0; pointer-events:none; transition:opacity 0.18s ease;
   }
   .overlay.open{ opacity:1; pointer-events:auto; }
@@ -352,7 +352,7 @@
   }
   .panel-close:hover{ background:rgba(42,36,28,0.12); }
 
-  .panel-scroll{ max-height:90vh; overflow-y:auto; padding:44px 28px 28px 32px; }
+  .panel-scroll{ max-height:90vh; max-height:90dvh; overflow-y:auto; padding:44px 28px 28px 32px; }
 
   /* Form */
   .field{ margin-bottom:18px; }
@@ -390,14 +390,19 @@
   .field-row>*{ min-width:0; }
   .field{ min-width:0; }
   input.plain-input{ min-width:0; }
-  /* Batch 7b: Use-by / Low-at rows stack on phones so a date input can
-     never run under the Low-at box (its intrinsic width overflows a
-     two-column flex row at 390px). */
-  @media (max-width:720px){
-    .field-row.expiry-row{ flex-direction:column; gap:10px; }
-    .field-row.expiry-row .field{ flex:1 1 auto !important; }
-  }
+  /* Batch 8: Use-by / Low-at rows ALWAYS stack, on every width. Batch 7b
+     stacked them only under a 720px media query and Viba's phone still
+     showed the date input running under the Low-at box, so the stacking
+     no longer depends on any media query. Each field is full-width with
+     min-width:0, so a date input's intrinsic width can never overflow. */
+  .field-row.expiry-row{ flex-direction:column; gap:10px; }
+  .field-row.expiry-row .field{ flex:1 1 auto !important; width:100%; }
+  .field-row.expiry-row input.plain-input{ width:100%; min-width:0; }
   .field-row input.plain-input{ width:100%; flex:1; }
+  /* Batch 8: a text input directly inside .field is full-width too — the
+     140px base width clipped the pantry name to "e.g. Chicken bre". */
+  .field>input.plain-input{ width:100%; box-sizing:border-box; }
+  #pantry-name, #scan-nickname{ width:100%; box-sizing:border-box; }
 
   .dropzone{
     border:1.5px dashed var(--line-card); border-radius:12px;
@@ -687,7 +692,7 @@
   .pantry-add{ background:var(--card-soft); border:1px solid var(--line-card); border-radius:14px; padding:16px; margin-bottom:18px; }
   .pantry-add .field{ margin-bottom:14px; }
   .pantry-add .field:last-child{ margin-bottom:0; }
-  .pantry-add input.plain-input{ font-size:1rem; min-height:48px; }
+  .pantry-add input.plain-input{ font-size:1rem; min-height:48px; width:100%; box-sizing:border-box; }
   .pantry-add .btn-primary{ min-height:48px; }
   .mini-chips{ display:flex; gap:8px; flex-wrap:wrap; }
   .mini-chip{
@@ -1068,6 +1073,7 @@
       <h2 style="font-family:var(--font-display); font-weight:700; font-size:1.4rem; margin:0 0 6px;">My pantry</h2>
       <p class="pantry-summary" id="pantry-summary"></p>
       <div class="pantry-add">
+        <button type="button" class="btn-primary" id="pantry-scan-btn" style="width:100%; margin-bottom:14px;">&#128269; Scan a barcode — add a packet</button>
         <div class="field">
           <label for="pantry-name">Item name</label>
           <input type="text" class="plain-input" id="pantry-name" placeholder="e.g. Chicken breast" autocomplete="off">
@@ -1107,12 +1113,11 @@
             <label for="pantry-expiry">Use by (optional)</label>
             <input type="date" class="plain-input" id="pantry-expiry" style="min-height:48px;">
           </div>
-          <div class="field" style="flex:0 0 110px; margin-bottom:0;">
+          <div class="field" style="margin-bottom:0;">
             <label for="pantry-low">Low at</label>
             <input type="number" class="plain-input" id="pantry-low" value="1" min="0" step="any" inputmode="decimal" style="min-height:48px;">
           </div>
         </div>
-        <button type="button" class="btn-secondary" id="pantry-scan-btn" style="width:100%; margin-bottom:8px;">&#128269; Scan a barcode — add a packet</button>
         <button type="button" class="btn-primary" id="pantry-add-btn" style="width:100%;">Add to pantry</button>
         <div class="hint">Two taps after the name: pick a unit if it isn't pieces, tap Add. Tap the name, unit, location, quantity, expiry or low-at number right in the list below to change it — everything else on the item stays as it is.</div>
       </div>
@@ -1275,7 +1280,7 @@
         </div>
         <div class="field-row expiry-row" style="margin-bottom:14px;">
           <div class="field" style="flex:1; margin-bottom:0;"><label for="scan-expiry">Use by (optional)</label><input type="date" class="plain-input" id="scan-expiry" style="min-height:48px;"></div>
-          <div class="field" style="flex:0 0 110px; margin-bottom:0;"><label for="scan-low">Low at</label><input type="number" class="plain-input" id="scan-low" value="1" min="0" step="any" inputmode="decimal" style="min-height:48px;"></div>
+          <div class="field" style="margin-bottom:0;"><label for="scan-low">Low at</label><input type="number" class="plain-input" id="scan-low" value="1" min="0" step="any" inputmode="decimal" style="min-height:48px;"></div>
         </div>
         <div class="scan-form-grid">
           <div class="field"><label for="scan-calories">Calories per 100 g (kcal)</label><input type="number" min="0" step="0.1" class="plain-input" id="scan-calories"></div>
@@ -3083,7 +3088,7 @@
       name: String(raw.name || 'Unnamed product'),
       brand: String(raw.brand || ''),
       quantity: String(raw.quantity || ''),
-      per100g: { calories: pg.calories, protein: (typeof pg.protein === 'number' ? pg.protein : null), carbs: (typeof pg.carbs === 'number' ? pg.carbs : null), fat: (typeof pg.fat === 'number' ? pg.fat : null) },
+      per100g: { calories: Math.round(pg.calories), protein: round1num(typeof pg.protein === 'number' ? pg.protein : null), carbs: round1num(typeof pg.carbs === 'number' ? pg.carbs : null), fat: round1num(typeof pg.fat === 'number' ? pg.fat : null) },
       perServing: (raw.perServing && typeof raw.perServing === 'object') ? raw.perServing : null,
       source: raw.source || 'off',
       savedAt: (typeof raw.savedAt === 'number' ? raw.savedAt : Date.now()),
@@ -3345,6 +3350,9 @@
     if (VOLUME_TSP[unit]){ const g = genericGramsFor(unit, parsed.ingredient, parsed.raw); return (g != null) ? g * q : null; }
     return null;
   }
+  // Batch 8: null-safe 1-decimal rounding for label macros (FAGE yoghurt
+  // arrived as 10.5882352941176g protein / 2.94117647058824g carbs).
+  function round1num(v){ return (v == null) ? null : Math.round(v * 10) / 10; }
   // Parse an Open Food Facts v2 product into a brand-pantry item. Only
   // per-100g nutriments are used (never per-serving or per-product values,
   // which are a different basis). Energy may be kJ (energy_100g) — convert
@@ -3356,8 +3364,8 @@
     let kcal = num(n['energy-kcal_100g']);
     if (kcal == null && num(n.energy_100g) != null) kcal = num(n.energy_100g) / 4.184;
     if (kcal == null) return null;
-    const per100g = { calories: Math.round(kcal * 10) / 10, protein: num(n.proteins_100g), carbs: num(n.carbohydrates_100g), fat: num(n.fat_100g) };
-    const perServing = (num(n['energy-kcal_serving']) != null) ? { calories: num(n['energy-kcal_serving']), protein: num(n.proteins_serving), carbs: num(n.carbohydrates_serving), fat: num(n.fat_serving) } : null;
+    const per100g = { calories: Math.round(kcal), protein: round1num(num(n.proteins_100g)), carbs: round1num(num(n.carbohydrates_100g)), fat: round1num(num(n.fat_100g)) };
+    const perServing = (num(n['energy-kcal_serving']) != null) ? { calories: Math.round(num(n['energy-kcal_serving'])), protein: round1num(num(n.proteins_serving)), carbs: round1num(num(n.carbohydrates_serving)), fat: round1num(num(n.fat_serving)) } : null;
     return {
       barcode: String(barcode || product.code || ''),
       name: String(product.product_name || product.product_name_en || 'Unnamed product'),
@@ -4206,9 +4214,9 @@
     el.innerHTML = brandPantry.map(function(it, idx){
       const pg = it.per100g || {};
       const macros = (pg.calories != null ? Math.round(pg.calories) + ' kcal' : '?') +
-        (pg.protein != null ? ' · ' + pg.protein + 'g protein' : '') +
-        (pg.carbs != null ? ' · ' + pg.carbs + 'g carbs' : '') +
-        (pg.fat != null ? ' · ' + pg.fat + 'g fat' : '') + ' / 100 g';
+        (pg.protein != null ? ' · ' + round1num(pg.protein) + 'g protein' : '') +
+        (pg.carbs != null ? ' · ' + round1num(pg.carbs) + 'g carbs' : '') +
+        (pg.fat != null ? ' · ' + round1num(pg.fat) + 'g fat' : '') + ' / 100 g';
       return '<div class="brand-item"><div><b>' + escapeHtml(it.name) + '</b>' +
         (it.brand ? ' <span class="brand-meta">(' + escapeHtml(it.brand) + ')</span>' : '') +
         '<div class="brand-meta">' + escapeHtml(macros) +
@@ -4238,9 +4246,9 @@
     return '<div class="brand-item"><div><b>' + escapeHtml(item.name) + '</b>' +
       (item.brand ? ' <span class="brand-meta">(' + escapeHtml(item.brand) + ')</span>' : '') +
       '<div class="brand-meta">Per 100 g: ' + (pg.calories != null ? Math.round(pg.calories) + ' kcal' : '?') +
-      (pg.protein != null ? ' · ' + pg.protein + 'g protein' : '') +
-      (pg.carbs != null ? ' · ' + pg.carbs + 'g carbs' : '') +
-      (pg.fat != null ? ' · ' + pg.fat + 'g fat' : '') +
+      (pg.protein != null ? ' · ' + round1num(pg.protein) + 'g protein' : '') +
+      (pg.carbs != null ? ' · ' + round1num(pg.carbs) + 'g carbs' : '') +
+      (pg.fat != null ? ' · ' + round1num(pg.fat) + 'g fat' : '') +
       (item.quantity ? ' · ' + escapeHtml(item.quantity) : '') + '</div></div></div>';
   }
   function findBrandByBarcode(code){
@@ -4651,10 +4659,10 @@
     const lowAt = (typeof raw.lowAt === 'number' && isFinite(raw.lowAt) && raw.lowAt >= 0) ? raw.lowAt : 1;
     const pg = raw.per100g || null;
     const per100g = (pg && typeof pg.calories === 'number') ? {
-      calories: pg.calories,
-      protein: (typeof pg.protein === 'number' ? pg.protein : null),
-      carbs: (typeof pg.carbs === 'number' ? pg.carbs : null),
-      fat: (typeof pg.fat === 'number' ? pg.fat : null)
+      calories: Math.round(pg.calories),
+      protein: round1num(typeof pg.protein === 'number' ? pg.protein : null),
+      carbs: round1num(typeof pg.carbs === 'number' ? pg.carbs : null),
+      fat: round1num(typeof pg.fat === 'number' ? pg.fat : null)
     } : null;
     return {
       id: String(raw.id || ('p' + Date.now().toString(36) + Math.random().toString(36).slice(2,8))),
@@ -4809,9 +4817,9 @@
       if (it.barcode) subBits.push('barcode ' + escapeHtml(it.barcode));
       const subHtml = subBits.length ? '<div class="pantry-sub">' + subBits.join(' · ') + '</div>' : '';
       const macrosHtml = (it.per100g && it.per100g.calories != null) ? '<div class="pantry-macros">' + Math.round(it.per100g.calories) + ' kcal/100 g' +
-        (it.per100g.protein != null ? ' · ' + it.per100g.protein + 'g protein' : '') +
-        (it.per100g.carbs != null ? ' · ' + it.per100g.carbs + 'g carbs' : '') +
-        (it.per100g.fat != null ? ' · ' + it.per100g.fat + 'g fat' : '') + '</div>' : '';
+        (it.per100g.protein != null ? ' · ' + round1num(it.per100g.protein) + 'g protein' : '') +
+        (it.per100g.carbs != null ? ' · ' + round1num(it.per100g.carbs) + 'g carbs' : '') +
+        (it.per100g.fat != null ? ' · ' + round1num(it.per100g.fat) + 'g fat' : '') + '</div>' : '';
       // Batch 7c: name is tappable to rename inline; location and unit
       // are tappable to cycle; low-at is a number box. All save
       // immediately and leave barcode / nutrition / productName alone.
@@ -4933,7 +4941,9 @@
     }
     renderPantryList();
     $('#pantry-overlay').classList.add('open');
-    if (!prefill) $('#pantry-name').focus(); // batch 6b: synchronous, same focus-steal race as the edit form
+    // Batch 8: NO autofocus here — on iPhone it pops the keyboard the
+    // moment My pantry opens and covers the unit chips / Add button /
+    // scan button. The keyboard appears only when she taps a field.
   }
   function closePantry(){ $('#pantry-overlay').classList.remove('open'); }
 
@@ -5023,6 +5033,17 @@
 
   // ---------- Pantry overlay wiring ----------
   $('#open-pantry-btn').addEventListener('click', function(){ openPantry(); });
+
+  // Batch 8: when the iOS keyboard opens, keep the focused field (and the
+  // buttons below it) reachable — scroll the field to the middle of the
+  // panel after the keyboard has resized the viewport (~350ms).
+  document.addEventListener('focusin', function(e){
+    const t = e.target;
+    if (!t || !t.matches || !t.matches('input, textarea, select')) return;
+    const scroller = t.closest ? t.closest('.panel-scroll') : null;
+    if (!scroller) return;
+    setTimeout(function(){ try{ t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }catch(err){} }, 350);
+  });
   // Batch 7b: scan from inside the Pantry itself — no recipe needed.
   // Closes the pantry overlay, opens the barcode overlay; saving from the
   // unified scan form returns to the pantry list (saveScanPantryForm).
