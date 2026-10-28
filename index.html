@@ -763,6 +763,9 @@
   .picker-item:disabled{ opacity:0.45; cursor:default; }
   .picker-item small{ color:#6b7a63; display:block; margin-top:2px; }
   .pantry-add-pantry-btn:hover{ text-decoration:underline; }
+  .pantry-in-stock{ background:none; border:none; color:var(--ink-soft); font-weight:700; padding:2px 6px; flex:none; font-size:0.85rem; cursor:pointer; text-align:right; line-height:1.35; }
+  .pantry-in-stock:hover{ text-decoration:underline; }
+  .brand-only-link{ background:none; border:none; color:var(--ink-soft); font-size:0.85rem; text-decoration:underline; cursor:pointer; padding:6px 0 0; }
   @media (max-width:520px){
     .pantry-item{ flex-wrap:wrap; }
     .pantry-stepper{ width:100%; justify-content:flex-start; }
@@ -1189,7 +1192,7 @@
       </div>
       <div class="field">
         <label>Supabase anon key</label>
-        <input type="password" class="plain-input" id="sync-anon" placeholder="Paste the anon public key" autocomplete="off">
+        <input type="text" class="plain-input" id="sync-anon" placeholder="Paste the anon public key" autocomplete="off">
         <div class="hint">Saved on this device only, like your USDA key — never in the code or the repo. Supabase dashboard → Settings → API → Project URL + anon public key. Paste the Project URL exactly as https://xxxx.supabase.co — with nothing after it, no /rest/v1, no /auth/v1.</div>
       </div>
       <div class="field">
@@ -1198,7 +1201,7 @@
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" class="plain-input" id="sync-password" placeholder="Your Supabase account password" autocomplete="current-password">
+        <input type="password" class="plain-input" id="sync-password" placeholder="Your Supabase account password" autocomplete="off">
         <div class="hint">Used only to sign in on this device. It is never stored — only the login session is kept, on this device.</div>
       </div>
       <div class="tonight-actions">
@@ -1270,6 +1273,7 @@
             <button type="button" class="mini-chip" data-unit="pack">pack</button>
           </div>
         </div>
+        <div class="field"><label for="scan-pieces-per-pack">Slices/pieces in this pack (optional)</label><input type="number" min="1" step="1" class="plain-input" id="scan-pieces-per-pack" inputmode="numeric" placeholder="e.g. 24"><div class="hint">For bread, crackers, anything you count in slices or pieces — so recipes can say "2 slices" and the app knows the grams. Leave blank if you use grams.</div></div>
         <div class="field"><label>Where is it?</label>
           <div class="mini-chips" id="scan-loc-chips">
             <button type="button" class="mini-chip active" data-loc="pantry">Pantry</button>
@@ -1290,6 +1294,7 @@
         </div>
         <div class="hint" style="margin:0 0 10px;">Nutrition comes from the label (Open Food Facts or your saved brand). Edit it here if the label says otherwise — this is what the estimator will use for this packet.</div>
         <button type="button" class="btn-primary" id="scan-save-pantry" style="width:100%;">Save to my pantry</button>
+        <button type="button" class="brand-only-link" id="scan-save-brand-only">Just remember this label — don't add a packet to my shelf</button>
         <button type="button" class="btn-secondary" id="scan-cancel" style="width:100%; margin-top:8px;">Not now</button>
       </div>
       <div id="barcode-add-form" style="display:none;">
@@ -1304,13 +1309,20 @@
           <div class="field"><label>Carbs per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="off-carbs"></div>
           <div class="field"><label>Fat per 100 g (g)</label><input type="number" min="0" step="0.1" class="plain-input" id="off-fat"></div>
           <div class="field"><label>Open Food Facts username (not your email)</label><input type="text" class="plain-input" id="off-user" autocomplete="username"></div>
-          <div class="field"><label>Open Food Facts password</label><input type="password" class="plain-input" id="off-password" autocomplete="current-password"></div>
+          <div class="field"><label>Open Food Facts password</label>
+            <div id="off-password-saved" style="display:none; align-items:center; gap:10px;">
+              <span class="hint" style="margin:0;">Saved on this device &#10003;</span>
+              <button type="button" class="btn-secondary" id="off-password-change" style="padding:6px 12px; font-size:0.85rem;">Change</button>
+            </div>
+            <input type="password" class="plain-input" id="off-password" autocomplete="off" placeholder="Your Open Food Facts password">
+          </div>
         </div>
         <div class="hint">Your Open Food Facts login is saved on this device only, like your USDA key — never in the code or the repo. You need a free Open Food Facts account to add products (make one in the Open Food Facts app).</div>
         <button type="button" class="btn-primary" id="off-submit" style="width:100%;">Save to my pantry &amp; add to Open Food Facts</button>
         <button type="button" class="btn-secondary" id="off-save-local" style="width:100%; margin-top:8px;">Save to my pantry only (skip Open Food Facts)</button>
       </div>
       <h3 style="font-family:var(--font-display); margin:22px 0 6px;">Your brand pantry</h3>
+      <p class="hint" style="margin:0 0 8px;">These are labels you have scanned — not what's on your shelf. The estimator uses them to know a product's per-100 g values.</p>
       <div id="brand-pantry-list"><div class="hint">Nothing scanned yet.</div></div>
       <p class="hint">Scanned brands sync between phone and laptop with the rest of your pantry, when you're signed in. Your Open Food Facts login and USDA key do not sync — they stay per device.</p>
     </div>
@@ -1918,6 +1930,7 @@
       }).join('');
     }
     $('#picker-overlay').classList.add('open');
+    resetOverlayScroll($('#picker-overlay'));
   }
   function closePantryPicker(){ $('#picker-overlay').classList.remove('open'); pickerTargetRow = null; }
   $('#picker-close').addEventListener('click', closePantryPicker);
@@ -1960,6 +1973,7 @@
     editSnapshot = formSnapshot();
     maybeShowDraftBanner(null);
     editOverlay.classList.add('open');
+    resetOverlayScroll(editOverlay);
     // Batch 6b: focus synchronously, inside the tap that opened the form.
     // The old 80ms setTimeout fired AFTER the user (or a test) had
     // already moved into an ingredient field, stealing focus back to
@@ -1991,6 +2005,7 @@
     editSnapshot = formSnapshot();
     maybeShowDraftBanner(recipe.id);
     editOverlay.classList.add('open');
+    resetOverlayScroll(editOverlay);
   }
 
   function closeEditModal(){
@@ -2950,6 +2965,7 @@
     $('#finder-pantry').value = loadPantry();
     updateFinderPantryNote();
     finderOverlay.classList.add('open');
+    resetOverlayScroll(finderOverlay);
     renderFinderResults();
     $('#finder-pantry').focus(); // batch 6b: synchronous, same focus-steal race as the edit form
   });
@@ -2994,6 +3010,7 @@
       '<h3>' + escapeHtml(r.title) + '</h3>' +
       '<div class="hint" style="margin:0;">' + meta.join(' · ') + '</div></div>';
     tonightOverlay.classList.add('open');
+    resetOverlayScroll(tonightOverlay);
   }
 
   $('#tonight-btn').addEventListener('click', function(){ tonightId = null; showTonight(); });
@@ -3090,6 +3107,12 @@
       quantity: String(raw.quantity || ''),
       per100g: { calories: Math.round(pg.calories), protein: round1num(typeof pg.protein === 'number' ? pg.protein : null), carbs: round1num(typeof pg.carbs === 'number' ? pg.carbs : null), fat: round1num(typeof pg.fat === 'number' ? pg.fat : null) },
       perServing: (raw.perServing && typeof raw.perServing === 'object') ? raw.perServing : null,
+      // Batch 8 patch: slices/pieces per pack (from the scan form) and
+      // the serving-size text (from the label) — both survive reloads so
+      // a re-scan can prefill, and a row saved before piecesPerPack can
+      // still convert via the brand library.
+      piecesPerPack: (typeof raw.piecesPerPack === 'number' && isFinite(raw.piecesPerPack) && raw.piecesPerPack > 0) ? Math.floor(raw.piecesPerPack) : null,
+      servingSize: String(raw.servingSize || ''),
       source: raw.source || 'off',
       savedAt: (typeof raw.savedAt === 'number' ? raw.savedAt : Date.now()),
       updatedAt: (typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now())
@@ -3343,12 +3366,95 @@
     const q = parsed.quantity;
     if (q == null) return null;
     const unit = parsed.unit;
-    if (!unit) return null;
+    // Batch 8 patch: a packet count ("1 packet Shin Ramyun", "1 can
+    // FAGE") or a bare count ("1 Shin Ramyun") is one packet of the
+    // matched scanned item. A slice ("2 slices bread") is one piece —
+    // pack grams / pieces per pack — and a piece ("1 piece bread") is
+    // one piece when slices-per-pack is known, else one packet (a tub
+    // of yoghurt is one piece). Scanned path only — generic USDA/
+    // override foods never come through here.
+    if (unit === 'slice'){
+      const gpp = gramsPerPieceForItem(item);
+      return (gpp != null) ? gpp * q : null;
+    }
+    if (!unit || PACKET_UNIT_SET[unit]){
+      if (unit === 'piece'){
+        const gpp = gramsPerPieceForItem(item);
+        if (gpp != null) return gpp * q;
+      }
+      const pg = packGramsForItem(item);
+      return (pg != null) ? pg * q : null;
+    }
     if (WEIGHT_GRAMS[unit]) return WEIGHT_GRAMS[unit] * q;
     const alias = UNIT_ALIASES[unit] || unit;
     if (alias === 'gram' || alias === 'kilogram' || alias === 'ounce' || alias === 'pound') return WEIGHT_GRAMS[alias] * q;
     if (VOLUME_TSP[unit]){ const g = genericGramsFor(unit, parsed.ingredient, parsed.raw); return (g != null) ? g * q : null; }
     return null;
+  }
+  // Batch 8 patch: units that name one packet of a scanned item — a
+  // packet, pack, piece, can, bottle, bag, box or jar, or a bare count
+  // ("1 Shin Ramyun"). "packet"/"pack" never reach here as a parsed unit
+  // (they are not unit words), so a bare count is the packet case too.
+  const PACKET_UNIT_SET = { piece: 1, package: 1, pkg: 1, can: 1, bottle: 1, bag: 1, box: 1, jar: 1 };
+  // Batch 8 patch: grams in one packet of a scanned item — the conversion
+  // shared by the estimator, the Cook Finder (via formatPantryQty) and
+  // deduction. Sources, in order: the pantry row's own gramsPerUnit
+  // (saved at scan time), the label's pack-quantity text ("120 g"), the
+  // brand library via the row's barcode, and — for a mass row — the row's
+  // own quantity (a row scanned from one packet starts at the pack
+  // weight). null when no mass weight is known; volume packs ("500 ml")
+  // have no gram weight without a density.
+  function packGramsForItem(item){
+    if (!item) return null;
+    if (typeof item.gramsPerUnit === 'number' && item.gramsPerUnit > 0) return item.gramsPerUnit;
+    const pg = gramsFromPackQty(item.quantity || '');
+    if (pg != null) return pg;
+    if (item.barcode && typeof findBrandByBarcode === 'function'){
+      const b = findBrandByBarcode(item.barcode);
+      if (b){
+        const bg = gramsFromPackQty(b.quantity || '');
+        if (bg != null) return bg;
+      }
+    }
+    if ((item.unit === 'g' || item.unit === 'kg') && typeof item.qty === 'number' && item.qty > 0) return item.unit === 'g' ? item.qty : item.qty * 1000;
+    return null;
+  }
+  // Batch 8 patch: grams in one unit of a pantry row, for top-up and
+  // deduction conversion. Mass rows are 1 / 1000 g per unit; a counted
+  // row is one packet (packGramsForItem); volume rows have no gram basis.
+  function gramsPerUnitOf(x){
+    if (!x) return null;
+    if (x.unit === 'g') return 1;
+    if (x.unit === 'kg') return 1000;
+    return packGramsForItem(x);
+  }
+  // Batch 8 patch: slices/pieces per pack for an item — its own value
+  // first, else the brand library's (a row saved before piecesPerPack
+  // existed still converts once the brand knows it).
+  function piecesPerPackOf(item){
+    if (!item) return null;
+    if (typeof item.piecesPerPack === 'number' && item.piecesPerPack > 0) return item.piecesPerPack;
+    if (item.barcode && typeof findBrandByBarcode === 'function'){
+      const b = findBrandByBarcode(item.barcode);
+      if (b && typeof b.piecesPerPack === 'number' && b.piecesPerPack > 0) return b.piecesPerPack;
+    }
+    return null;
+  }
+  // Batch 8 patch: grams in one piece (slice) of a scanned item — pack
+  // grams / pieces per pack. Pack grams come only from the row's
+  // gramsPerUnit or the label's pack quantity — never from a mass row's
+  // own qty (a half-used gram row is not a whole pack).
+  function gramsPerPieceForItem(item){
+    if (!item) return null;
+    const pieces = piecesPerPackOf(item);
+    if (pieces == null) return null;
+    let pg = (typeof item.gramsPerUnit === 'number' && item.gramsPerUnit > 0) ? item.gramsPerUnit : null;
+    if (pg == null) pg = gramsFromPackQty(item.quantity || '');
+    if (pg == null && item.barcode && typeof findBrandByBarcode === 'function'){
+      const b = findBrandByBarcode(item.barcode);
+      if (b) pg = gramsFromPackQty(b.quantity || '');
+    }
+    return (pg != null) ? pg / pieces : null;
   }
   // Batch 8: null-safe 1-decimal rounding for label macros (FAGE yoghurt
   // arrived as 10.5882352941176g protein / 2.94117647058824g carbs).
@@ -3373,6 +3479,10 @@
       quantity: String(product.quantity || product.serving_size || ''),
       per100g: per100g,
       perServing: perServing,
+      // Batch 8 patch: the serving-size text ("2 slices (76 g)") is what
+      // lets the scan form prefill slices-per-pack; the per-serving
+      // nutrition alone cannot.
+      servingSize: String(product.serving_size || ''),
       source: 'off',
       savedAt: Date.now(), updatedAt: Date.now()
     };
@@ -3518,6 +3628,13 @@
         };
       }
     }
+    // Batch 8 patch: a slice line against a scanned item whose
+    // slices-per-pack is unknown cannot be converted — say so plainly
+    // instead of silently falling through to a generic USDA loaf.
+    if (parsed.unit === 'slice' && (pantryMatch || brand)){
+      return { status: 'no-slice-weight', core: parsed.alternatives[0], grams: null,
+        reason: 'Could not convert slices — no slices-per-pack saved for this item. Add it on the pantry row, or use grams instead.' };
+    }
     // 1. Local override next: Indian spices/pastes/dairy never go to USDA
     //    search at all, so they can never come back as Baobab / soup / etc.
     const override = findOverride(parsed.ingredient, parsed.raw);
@@ -3572,6 +3689,8 @@
         meta = 'not in USDA — skipped';
       } else if (row.status === 'no-amount'){
         meta = 'amount not convertible — skipped<br>' + escapeHtml(row.food.description);
+      } else if (row.status === 'no-slice-weight'){
+        meta = 'could not convert slices — skipped<br>' + escapeHtml(row.reason || 'Add slices-per-pack on the pantry row, or use grams instead.');
       } else if (row.status === 'optional'){
         meta = 'optional — not counted';
       } else if (row.status === 'error'){
@@ -3625,6 +3744,7 @@
   async function openNutritionEstimator(recipe){
     currentEstimate = null;
     nutritionOverlay.classList.add('open');
+    resetOverlayScroll(nutritionOverlay);
     $('#fdc-key').value = getFdcKey() === 'DEMO_KEY' ? '' : getFdcKey();
     $('#nutrition-servings').value = (typeof recipe.servings === 'number' && recipe.servings > 0) ? recipe.servings : '';
     const content = $('#nutrition-content');
@@ -3861,7 +3981,7 @@
     if (emailEl && syncSession && syncSession.user) emailEl.value = syncSession.user.email;
   }
 
-  function openSyncPanel(){ refreshSyncPanel(); $('#sync-overlay').classList.add('open'); }
+  function openSyncPanel(){ refreshSyncPanel(); $('#sync-password').value = ''; $('#sync-overlay').classList.add('open'); resetOverlayScroll($('#sync-overlay')); }
   function closeSyncPanel(){ $('#sync-overlay').classList.remove('open'); }
 
   async function syncAuthRequest(grant, body){
@@ -4199,6 +4319,10 @@
   let lastKnownBrand = null;
   let currentScanItem = null;
   let scanUnit = 'g';
+  // Batch 8 patch: the qty value as prefilled from the label, in
+  // scanUnit — the only value a unit-chip tap may convert. Cleared the
+  // moment the user types; updated by the steppers.
+  let scanPrefillQty = null;
   let scanLoc = 'pantry';
 
   function cleanBarcode(code){
@@ -4217,15 +4341,26 @@
         (pg.protein != null ? ' · ' + round1num(pg.protein) + 'g protein' : '') +
         (pg.carbs != null ? ' · ' + round1num(pg.carbs) + 'g carbs' : '') +
         (pg.fat != null ? ' · ' + round1num(pg.fat) + 'g fat' : '') + ' / 100 g';
+      const stocked = stockedPantryItemForBarcode(it.barcode);
       return '<div class="brand-item"><div><b>' + escapeHtml(it.name) + '</b>' +
         (it.brand ? ' <span class="brand-meta">(' + escapeHtml(it.brand) + ')</span>' : '') +
         '<div class="brand-meta">' + escapeHtml(macros) +
         (it.barcode ? ' · barcode ' + escapeHtml(it.barcode) : '') +
         (it.quantity ? ' · ' + escapeHtml(it.quantity) : '') + '</div></div>' +
         '<div style="display:flex; gap:2px; flex:none;">' +
-        '<button type="button" class="pantry-add-pantry-btn" data-idx="' + idx + '">Add to pantry</button>' +
+        (stocked ? '<button type="button" class="pantry-in-stock" data-id="' + stocked.id + '" title="See it in your pantry">' + escapeHtml(stockedStateText(stocked)) + '</button>' : '<button type="button" class="pantry-add-pantry-btn" data-idx="' + idx + '">Add to pantry</button>') +
         '<button type="button" class="brand-remove" data-barcode="' + escapeHtml(it.barcode) + '" aria-label="Remove">Remove</button></div></div>';
     }).join('');
+  }
+  // Batch 8 patch: the OFF password field stays empty unless she taps
+  // Change. When a password is already saved on this device, show the
+  // "Saved ✓" state instead — the submit reads the stored password from
+  // localStorage, so the field never needs a live credential in it.
+  function refreshOffPasswordState(){
+    const saved = !!lsGet(OFF_PASS_KEY);
+    const field = $('#off-password'), state = $('#off-password-saved');
+    if (field){ field.style.display = saved ? 'none' : 'block'; if (saved) field.value = ''; }
+    if (state) state.style.display = saved ? 'flex' : 'none';
   }
   function showBarcodeAddForm(barcode, prefill){
     lastBarcode = barcode;
@@ -4238,7 +4373,10 @@
     $('#off-carbs').value = (prefill && prefill.per100g && prefill.per100g.carbs != null) ? prefill.per100g.carbs : '';
     $('#off-fat').value = (prefill && prefill.per100g && prefill.per100g.fat != null) ? prefill.per100g.fat : '';
     $('#off-user').value = lsGet(OFF_USER_KEY) || '';
-    $('#off-password').value = lsGet(OFF_PASS_KEY) || '';
+    // Batch 8 patch: the password is NEVER restored into the visible
+    // field — a live credential in a managed password field is what
+    // makes Chrome pop its breach warning on every save.
+    refreshOffPasswordState();
   }
   function hideBarcodeAddForm(){ $('#barcode-add-form').style.display = 'none'; }
   function barcodeResultHtml(item){
@@ -4256,7 +4394,31 @@
     for (let i = 0; i < brandPantry.length; i++){ if (brandPantry[i].barcode === code) return brandPantry[i]; }
     return null;
   }
-  function scanSetUnit(u){
+  function scanSetUnit(u, convertQty){
+    // Batch 8 patch: switching the unit chip converts the shown qty so
+    // the number and the unit never disagree — "120 g" becomes "1 pack"
+    // (and back), instead of saving 120 as packs. Only on a real tap
+    // (convertQty); programmatic sets from a fresh prefill don't convert.
+    // And only while the field still holds the label-prefilled value —
+    // a number the user typed follows the chip instead (typing 2 then
+    // tapping 'pack' means 2 packs, not 2 g converted to packs).
+    if (convertQty && u !== scanUnit && scanPrefillQty != null){
+      const el = $('#scan-qty');
+      const cur = el ? parseFloat(el.value) : NaN;
+      if (!isNaN(cur) && Math.abs(cur - scanPrefillQty) < 0.001){
+        const pg = gramsFromPackQty((currentScanItem && currentScanItem.quantity) || '');
+        const mass = { g: 1, kg: 1000 }, vol = { ml: 1, l: 1000 };
+        const counted = { pieces: 1, bottle: 1, can: 1, pack: 1 };
+        let converted = false;
+        if (mass[scanUnit] && mass[u]){ el.value = String(Math.round((cur * mass[scanUnit] / mass[u]) * 100) / 100); converted = true; }
+        else if (vol[scanUnit] && vol[u]){ el.value = String(Math.round((cur * vol[scanUnit] / vol[u]) * 100) / 100); converted = true; }
+        else if (mass[scanUnit] && counted[u] && pg != null){ el.value = String(Math.round((cur * mass[scanUnit] / pg) * 100) / 100); converted = true; }
+        else if (counted[scanUnit] && mass[u] && pg != null){ el.value = String(Math.round((cur * pg / mass[u]) * 100) / 100); converted = true; }
+        scanPrefillQty = converted ? parseFloat(el.value) : null;
+      } else {
+        scanPrefillQty = null;
+      }
+    }
     scanUnit = u;
     const label = $('#scan-unit-label');
     if (label) label.textContent = u;
@@ -4275,8 +4437,12 @@
     currentScanItem = item || null;
     const code = barcode || (item && item.barcode) || lastBarcode || '';
     const parsed = parsePackQuantity(item && item.quantity);
+    // Batch 8 patch: a weighable pack the parser can't split ("2 lbs")
+    // is one pack, not one piece — the unit chips have no lb, and the
+    // row should read "1 pack", not "1 pieces".
+    const packGramsPre = gramsFromPackQty(item && item.quantity);
     const qty = parsed ? parsed.qty : 1;
-    const unit = parsed ? parsed.unit : 'pieces';
+    const unit = parsed ? parsed.unit : (packGramsPre != null ? 'pack' : 'pieces');
     $('#scan-nickname').value = (item && item.name) || '';
     const sub = $('#scan-product-sub');
     if (sub){
@@ -4288,6 +4454,7 @@
         (note ? '<br><b>' + escapeHtml(note) + '</b>' : '');
     }
     $('#scan-qty').value = String(qty);
+    scanPrefillQty = qty;
     scanSetUnit(unit);
     scanSetLoc('pantry');
     $('#scan-expiry').value = '';
@@ -4297,6 +4464,10 @@
     $('#scan-protein').value = (pg.protein != null) ? String(pg.protein) : '';
     $('#scan-carbs').value = (pg.carbs != null) ? String(pg.carbs) : '';
     $('#scan-fat').value = (pg.fat != null) ? String(pg.fat) : '';
+    // Batch 8 patch: slices/pieces per pack — the saved value first,
+    // else derived from the label when it cleanly yields one, else blank.
+    const ppp = (item && typeof item.piecesPerPack === 'number' && item.piecesPerPack > 0) ? item.piecesPerPack : piecesPerPackFromLabel(item);
+    $('#scan-pieces-per-pack').value = (ppp != null) ? String(ppp) : '';
     $('#scan-pantry-form').style.display = 'block';
   }
   async function saveScanPantryForm(){
@@ -4310,26 +4481,42 @@
     const protein = parseFloat($('#scan-protein').value), carbs = parseFloat($('#scan-carbs').value), fat = parseFloat($('#scan-fat').value);
     const per100g = (!isNaN(kcal)) ? { calories: kcal, protein: isNaN(protein) ? null : protein, carbs: isNaN(carbs) ? null : carbs, fat: isNaN(fat) ? null : fat } : (item.per100g || null);
     const barcode = item.barcode || lastBarcode || '';
+    // Batch 8 patch: slices/pieces per pack, from the one optional field.
+    const pppRaw = parseInt($('#scan-pieces-per-pack').value, 10);
+    const piecesPerPack = (!isNaN(pppRaw) && pppRaw > 0) ? pppRaw : null;
     // The brand library keeps the nutrition even after this packet is
     // used up (batch 7): saving here upserts the library entry, and
     // removing a pantry item never touches it.
     if (per100g){
       upsertBrandItem({ barcode: barcode, name: item.name || nickname, brand: item.brand || '', quantity: item.quantity || '',
-        per100g: per100g, perServing: item.perServing || null, source: item.source || 'off', savedAt: Date.now(), updatedAt: Date.now() });
+        per100g: per100g, perServing: item.perServing || null, piecesPerPack: piecesPerPack, servingSize: item.servingSize || '', source: item.source || 'off', savedAt: Date.now(), updatedAt: Date.now() });
       await saveBrandPantry();
       renderBrandPantryList();
     }
+    // Batch 8 patch: a counted row remembers its per-pack weight, so
+    // "1 packet" can estimate and deduct later. Only when the chosen
+    // unit counts packets — a gram row is already grams.
+    const packGrams = gramsFromPackQty(item.quantity || '');
+    const gramsPerUnit = (COUNTED_UNITS.indexOf(scanUnit) > -1 && packGrams != null) ? packGrams : null;
     const pantryItem = normalizePantryItem({
       name: nickname, qty: qty, unit: scanUnit, location: scanLoc,
       expiry: $('#scan-expiry').value || '', lowAt: (isNaN(lowRaw) ? 1 : lowRaw),
-      barcode: barcode, productName: item.name || '', brand: item.brand || '', per100g: per100g
+      barcode: barcode, productName: item.name || '', brand: item.brand || '', per100g: per100g,
+      gramsPerUnit: gramsPerUnit,
+      // Batch 8 patch: pieces-per-pack only means something on a counted
+      // row — a gram row is not a whole pack, so it stays null there.
+      piecesPerPack: (COUNTED_UNITS.indexOf(scanUnit) > -1) ? piecesPerPack : null
     });
     if (!pantryItem) return;
     const existing = findTopUpTarget(pantryItem);
     if (existing){
-      existing.qty = Math.round((existing.qty + pantryItem.qty) * 100) / 100;
+      // Batch 8 patch: add in the row's own unit — a 120 g scan into an
+      // 18 pack row adds 1 pack, never 120 (the old blind add made 138).
+      existing.qty = Math.round((existing.qty + topUpAmountInRowUnit(existing, pantryItem)) * 100) / 100;
       if (pantryItem.expiry) existing.expiry = pantryItem.expiry;
       if (!existing.per100g && pantryItem.per100g) existing.per100g = pantryItem.per100g;
+      if (existing.gramsPerUnit == null && pantryItem.gramsPerUnit != null) existing.gramsPerUnit = pantryItem.gramsPerUnit;
+      if (existing.piecesPerPack == null && pantryItem.piecesPerPack != null) existing.piecesPerPack = pantryItem.piecesPerPack;
       existing.updatedAt = Date.now();
       await savePantryItems();
       showToast('Topped up ' + existing.name + ' \u2014 now ' + formatPantryQty(existing));
@@ -4395,7 +4582,9 @@
       if (lastKnownBrand){
         const merged = { barcode: clean, name: data.product.product_name || lastKnownBrand.name, brand: data.product.brands || lastKnownBrand.brand,
           quantity: data.product.quantity || lastKnownBrand.quantity, per100g: lastKnownBrand.per100g, perServing: lastKnownBrand.perServing || null, source: 'off', savedAt: Date.now(), updatedAt: Date.now() };
-        resultEl.innerHTML = barcodeResultHtml(merged);
+        const mergedStocked = stockedPantryItemForBarcode(clean);
+        resultEl.innerHTML = barcodeResultHtml(merged) +
+          (mergedStocked ? '<div class="hint" style="margin-top:10px;"><b>Already in your pantry</b> — ' + escapeHtml(formatPantryQty(mergedStocked)) + (mergedStocked.expiry ? ', expires ' + escapeHtml(formatExpiryShort(mergedStocked.expiry)) : '') + '.</div>' : '');
         openScanPantryForm(merged, clean, 'Open Food Facts has no nutrition for this one — using the label values you saved last time.');
         return merged;
       }
@@ -4406,18 +4595,16 @@
       return null;
     }
     lastOffItem = item;
+    // Batch 8 patch: one save, not two competing buttons. The unified
+    // scan form below (opened by openScanPantryForm at the end of this
+    // branch) is the action — its "Save to my pantry" saves the brand
+    // label AND the pantry item together. When this barcode is already
+    // on the shelf, say so up front instead of offering a plain
+    // "Add this to my pantry".
+    const stocked = stockedPantryItemForBarcode(clean);
     resultEl.innerHTML = barcodeResultHtml(item) +
-      '<button type="button" class="btn-primary" id="barcode-save" style="width:100%; margin-top:10px;">Save to my brand pantry</button>' +
-      '<button type="button" class="btn-secondary" id="barcode-add-pantry" style="width:100%; margin-top:8px;">Add this to my pantry</button>' +
+      (stocked ? '<div class="hint" style="margin-top:10px;"><b>Already in your pantry</b> — ' + escapeHtml(formatPantryQty(stocked)) + (stocked.expiry ? ', expires ' + escapeHtml(formatExpiryShort(stocked.expiry)) : '') + '. The form below adds another — it tops this row up when the use-by date matches, or adds a new row.</div>' : '') +
       '<div class="hint">Saved brands sync to your other device with the pantry. The estimator will use these label values for this product from now on.</div>';
-    const saveBtn = $('#barcode-save');
-    if (saveBtn) saveBtn.addEventListener('click', async function(){
-      if (await saveScannedItem(item)) showToast('Saved to your brand pantry — ' + item.name);
-    });
-    const addPantryBtn = $('#barcode-add-pantry');
-    if (addPantryBtn) addPantryBtn.addEventListener('click', async function(){
-      if (await saveScannedItem(item)) openScanPantryForm(item, clean);
-    });
     // Batch 7: the unified form is shown straight away with the lookup
     // result — scan, check nickname/qty/expiry, one tap to save.
     openScanPantryForm(item, clean);
@@ -4533,11 +4720,20 @@
     renderBrandPantryList();
     $('#off-user').value = lsGet(OFF_USER_KEY) || '';
     barcodeOverlay.classList.add('open');
+    resetOverlayScroll(barcodeOverlay);
   }
   function closeBarcodeOverlay(){
     stopBarcodeCamera();
     barcodeOverlay.classList.remove('open');
   }
+  // Batch 8 patch: "Change" reveals an empty password field to type a
+  // new one into — the saved password itself is never shown.
+  $('#off-password-change').addEventListener('click', function(){
+    const field = $('#off-password');
+    if (field){ field.style.display = 'block'; field.value = ''; field.focus(); }
+    const state = $('#off-password-saved');
+    if (state) state.style.display = 'none';
+  });
   // OFF write: save locally FIRST (usable immediately), then POST to OFF.
   // The OFF login is stored per device in localStorage, like the USDA key.
   async function submitToOff(saveLocalOnly){
@@ -4548,9 +4744,15 @@
           carbs = parseFloat($('#off-carbs').value), fat = parseFloat($('#off-fat').value);
     if (!name){ showToast('Give the product a name first'); return; }
     if (isNaN(kcal)){ showToast('Calories per 100 g is needed — it\u2019s on the label'); return; }
-    const user = $('#off-user').value.trim(), pass = $('#off-password').value;
+    // Batch 8 patch: the password comes from the transient field if she
+    // just typed one, else from storage — the visible field is never
+    // prefilled. A typed password is saved to storage, then the field is
+    // cleared immediately so no live credential sits in the DOM.
+    const typedPass = $('#off-password').value;
+    const user = $('#off-user').value.trim(), pass = typedPass || lsGet(OFF_PASS_KEY) || '';
     if (user) lsSet(OFF_USER_KEY, user);
-    if (pass) lsSet(OFF_PASS_KEY, pass);
+    if (typedPass) lsSet(OFF_PASS_KEY, typedPass);
+    $('#off-password').value = '';
     const item = { barcode: barcode, name: name, brand: brand, quantity: quantity,
       per100g: { calories: kcal, protein: isNaN(protein) ? null : protein, carbs: isNaN(carbs) ? null : carbs, fat: isNaN(fat) ? null : fat },
       perServing: null, source: 'manual', savedAt: Date.now(), updatedAt: Date.now() };
@@ -4604,14 +4806,37 @@
   $('#barcode-scan-btn').addEventListener('click', startBarcodeCamera);
   $('#barcode-stop-btn').addEventListener('click', stopBarcodeCamera);
   $('#scan-save-pantry').addEventListener('click', saveScanPantryForm);
+  // Batch 8 patch: the looked-it-up-but-didn't-buy-it case — remember
+  // the label only, add nothing to the shelf. Uses the form's current
+  // (possibly edited) macro values, not the raw lookup values.
+  $('#scan-save-brand-only').addEventListener('click', async function(){
+    const it = currentScanItem || null;
+    if (!it || !it.barcode){ showToast('Look up a barcode first'); return; }
+    const kcal = parseFloat($('#scan-calories').value);
+    const protein = parseFloat($('#scan-protein').value), carbs = parseFloat($('#scan-carbs').value), fat = parseFloat($('#scan-fat').value);
+    const per100g = (!isNaN(kcal)) ? { calories: kcal, protein: isNaN(protein) ? null : protein, carbs: isNaN(carbs) ? null : carbs, fat: isNaN(fat) ? null : fat } : (it.per100g || null);
+    const pppRaw = parseInt($('#scan-pieces-per-pack').value, 10);
+    const brandItem = { barcode: it.barcode, name: it.name || '', brand: it.brand || '', quantity: it.quantity || '', per100g: per100g, perServing: it.perServing || null, piecesPerPack: (!isNaN(pppRaw) && pppRaw > 0) ? pppRaw : null, servingSize: it.servingSize || '', source: it.source || 'off', savedAt: Date.now(), updatedAt: Date.now() };
+    if (await saveScannedItem(brandItem)) showToast('Label remembered — ' + (it.name || 'this product') + ' (nothing added to your shelf)');
+  });
   $('#scan-cancel').addEventListener('click', hideScanPantryForm);
-  $('#scan-qty-minus').addEventListener('click', function(){ const el = $('#scan-qty'); let v = parseFloat(el.value); if (isNaN(v)) v = 0; el.value = String(Math.max(0, Math.round((v - pantryStepFor(scanUnit)) * 100) / 100)); });
-  $('#scan-qty-plus').addEventListener('click', function(){ const el = $('#scan-qty'); let v = parseFloat(el.value); if (isNaN(v)) v = 0; el.value = String(Math.round((v + pantryStepFor(scanUnit)) * 100) / 100); });
-  $('#scan-unit-chips').addEventListener('click', function(e){ const b = e.target.closest('.mini-chip'); if (b) scanSetUnit(b.dataset.unit); });
+  $('#scan-qty-minus').addEventListener('click', function(){ const el = $('#scan-qty'); let v = parseFloat(el.value); if (isNaN(v)) v = 0; el.value = String(Math.max(0, Math.round((v - pantryStepFor(scanUnit)) * 100) / 100)); if (scanPrefillQty != null) scanPrefillQty = parseFloat(el.value); });
+  $('#scan-qty-plus').addEventListener('click', function(){ const el = $('#scan-qty'); let v = parseFloat(el.value); if (isNaN(v)) v = 0; el.value = String(Math.round((v + pantryStepFor(scanUnit)) * 100) / 100); if (scanPrefillQty != null) scanPrefillQty = parseFloat(el.value); });
+  // Typing a number by hand clears the prefill tracking — the typed
+  // number follows whatever unit chip is tapped next.
+  $('#scan-qty').addEventListener('input', function(){ scanPrefillQty = null; });
+  $('#scan-unit-chips').addEventListener('click', function(e){ const b = e.target.closest('.mini-chip'); if (b) scanSetUnit(b.dataset.unit, true); });
   $('#scan-loc-chips').addEventListener('click', function(e){ const b = e.target.closest('.mini-chip'); if (b) scanSetLoc(b.dataset.loc); });
   $('#off-submit').addEventListener('click', function(){ submitToOff(false); });
   $('#off-save-local').addEventListener('click', function(){ submitToOff(true); });
   $('#brand-pantry-list').addEventListener('click', function(e){
+    const inStockBtn = e.target.closest('.pantry-in-stock');
+    if (inStockBtn && inStockBtn.dataset.id){
+      pantryScrollToId = inStockBtn.dataset.id;
+      closeBarcodeOverlay();
+      openPantry();
+      return;
+    }
     const addBtn = e.target.closest('.pantry-add-pantry-btn');
     if (addBtn && addBtn.dataset.idx != null){
       const item = brandPantry[parseInt(addBtn.dataset.idx, 10)];
@@ -4638,10 +4863,19 @@
   // =====================================================================
   const PANTRY_ITEMS_KEY = 'pantry-inventory-data';
   const PANTRY_UNITS = ['g','kg','ml','l','pieces','bottle','can','pack'];
+  // Batch 8 patch: units that count packets, not grams — one unit is one
+  // packet, whose weight in grams lives in gramsPerUnit (scan-saved) or
+  // in the brand library's pack-quantity text.
+  const COUNTED_UNITS = ['pieces','bottle','can','pack'];
   const PANTRY_LOCS = ['pantry','fridge','freezer','spice'];
   const PANTRY_LOC_LABEL = { pantry:'Pantry', fridge:'Fridge', freezer:'Freezer', spice:'Spice' };
   let pantryItems = [];
+  let pantryScrollToId = null; // Batch 8 patch: brand-row "In your pantry" tap jumps here
   let pantryUnit = 'pieces';
+  // Batch 8 patch: same, for the manual pantry form — set only by an
+  // openPantry prefill (brand-row add). Plain manual adds never set it,
+  // so typing 2 then tapping 'kg' stays 2 kg (batch 7 behaviour).
+  let pantryPrefillQty = null;
   let pantryLoc = 'pantry';
 
   // Batch 7: a pantry item may carry scanned fields — barcode, per-100g
@@ -4669,6 +4903,14 @@
       name: name, qty: qty, unit: unit, location: loc, expiry: expiry, lowAt: lowAt,
       barcode: String(raw.barcode || ''), productName: String(raw.productName || ''), brand: String(raw.brand || ''),
       per100g: per100g,
+      // Batch 8 patch: grams in one counted unit (pack/can/bottle/piece).
+      // Set at scan-save time from the pack quantity; null for manual
+      // adds and for mass/volume rows. Survives sync + backup (v4).
+      gramsPerUnit: (typeof raw.gramsPerUnit === 'number' && isFinite(raw.gramsPerUnit) && raw.gramsPerUnit > 0) ? Math.round(raw.gramsPerUnit * 100) / 100 : null,
+      // Batch 8 patch: slices/pieces in one counted unit (a loaf: 24).
+      // Set in the scan form; null for manual adds and for items counted
+      // in grams. Survives sync + backup (v4).
+      piecesPerPack: (typeof raw.piecesPerPack === 'number' && isFinite(raw.piecesPerPack) && raw.piecesPerPack > 0) ? Math.floor(raw.piecesPerPack) : null,
       createdAt: (typeof raw.createdAt === 'number' ? raw.createdAt : Date.now()),
       updatedAt: (typeof raw.updatedAt === 'number' ? raw.updatedAt : Date.now())
     };
@@ -4677,11 +4919,26 @@
   // expiry match (or both have no expiry). A manual item (no barcode)
   // keeps the batch 6 rule — same name+unit tops up, newest expiry wins
   // — so the batch 6 top-up behaviour is preserved for hand-typed items.
+  // Batch 8 patch: how much of `item` to add to `row`, in the row's own
+  // unit — or null when the two cannot be added safely. Same unit: as-is.
+  // Different units: convert through grams (counted<->mass via the pack
+  // weight, g<->kg exactly). No gram basis on either side means no
+  // top-up at all — the caller keeps a separate row instead of a
+  // nonsense total like 18 pack + 120 g = 138 pack.
+  function topUpAmountInRowUnit(row, item){
+    if (row.unit === item.unit) return item.qty;
+    const rowG = gramsPerUnitOf(row);
+    const itemG = gramsPerUnitOf(item);
+    if (rowG == null || itemG == null) return null;
+    return Math.round(((item.qty * itemG) / rowG) * 100) / 100;
+  }
   function findTopUpTarget(item){
     return pantryItems.find(function(x){
-      if (x.name.toLowerCase() !== item.name.toLowerCase() || x.unit !== item.unit) return false;
-      if (item.barcode) return (x.barcode || '') === item.barcode && (x.expiry || '') === (item.expiry || '');
-      return true;
+      if (x.name.toLowerCase() !== item.name.toLowerCase()) return false;
+      if (item.barcode){
+        if ((x.barcode || '') !== item.barcode || (x.expiry || '') !== (item.expiry || '')) return false;
+      } else if (x.unit !== item.unit) return false; // manual: same unit only, as before
+      return topUpAmountInRowUnit(x, item) != null;
     }) || null;
   }
   async function loadPantryItems(){
@@ -4722,8 +4979,58 @@
     if (st.days === 1) return 'expires tomorrow';
     return 'expires in ' + st.days + ' days';
   }
+  // Batch 8 patch: a counted row shows its per-pack weight too —
+  // "18 pack · 120 g each" — from the row's own gramsPerUnit, or from
+  // the brand library when the row was saved before gramsPerUnit existed.
   function formatPantryQty(it){
-    return (Math.round(it.qty * 100) / 100) + ' ' + it.unit;
+    const base = (Math.round(it.qty * 100) / 100) + ' ' + it.unit;
+    if (COUNTED_UNITS.indexOf(it.unit) === -1) return base;
+    const pg = packGramsForItem(it);
+    if (pg == null) return base;
+    // Batch 8 patch: a pack with a known piece count shows the pieces
+    // too — "1 pack · 24 pieces · 38 g each" — and the pieces left
+    // ("0.92 pack · 22 pieces · 38 g each" after cooking 2 slices).
+    const ppp = piecesPerPackOf(it);
+    if (ppp != null){
+      const gpp = pg / ppp;
+      const piecesLeft = Math.round(it.qty * ppp);
+      return base + ' · ' + piecesLeft + ' pieces · ' + (Math.round(gpp * 10) / 10) + ' g each';
+    }
+    return base + ' · ' + (Math.round(pg * 100) / 100) + ' g each';
+  }
+  // Batch 8 patch: "12/01/2026" from a stored "2026-12-01" expiry.
+  function formatExpiryShort(iso){
+    if (!iso) return '';
+    const p = String(iso).split('-');
+    if (p.length !== 3) return iso;
+    return p[1] + '/' + p[2] + '/' + p[0];
+  }
+  // Batch 8 patch: is a packet of this barcode already on the shelf?
+  // Counts only when qty > 0 and not expired. Picks the
+  // expiring-soonest stocked row when the same barcode has several.
+  function stockedPantryItemForBarcode(code){
+    if (!code) return null;
+    const c = cleanBarcode(code);
+    if (!c) return null;
+    const matches = pantryItems.filter(function(x){
+      return (x.barcode || '') && cleanBarcode(x.barcode) === c && x.qty > 0 && !pantryStatus(x).expired;
+    });
+    if (!matches.length) return null;
+    matches.sort(function(a, b){
+      const da = pantryDaysLeft(a.expiry), db = pantryDaysLeft(b.expiry);
+      if (da === null && db === null) return 0;
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db;
+    });
+    return matches[0];
+  }
+  // Batch 8 patch: one-line stocked state, e.g. "In your pantry · 1 can
+  // · expires 12/01/2026" (expiry part only when the row has one).
+  function stockedStateText(it){
+    let s = 'In your pantry · ' + formatPantryQty(it);
+    if (it.expiry) s += ' · expires ' + formatExpiryShort(it.expiry);
+    return s;
   }
   function pantryLiveItems(){ return pantryItems.filter(function(it){ return !pantryStatus(it).expired; }); }
   function pantryInventoryCores(){
@@ -4815,6 +5122,15 @@
       if (it.productName && it.productName !== it.name) subBits.push(escapeHtml(it.productName) + (it.brand ? ' (' + escapeHtml(it.brand) + ')' : ''));
       else if (it.brand) subBits.push(escapeHtml(it.brand));
       if (it.barcode) subBits.push('barcode ' + escapeHtml(it.barcode));
+      if (COUNTED_UNITS.indexOf(it.unit) > -1){
+        const ppp = piecesPerPackOf(it);
+        const gpp = gramsPerPieceForItem(it);
+        // Batch 8 patch: the row itself shows pieces left — "24 pieces ·
+        // 37.8 g each" on a full loaf, "22 pieces · 37.8 g each" after
+        // cooking 2 slices. Without a piece count it stays "120 g each".
+        if (ppp != null && gpp != null) subBits.push(Math.round(it.qty * ppp) + ' pieces · ' + (Math.round(gpp * 10) / 10) + ' g each');
+        else { const pg = packGramsForItem(it); if (pg != null) subBits.push((Math.round(pg * 100) / 100) + ' g each'); }
+      }
       const subHtml = subBits.length ? '<div class="pantry-sub">' + subBits.join(' · ') + '</div>' : '';
       const macrosHtml = (it.per100g && it.per100g.calories != null) ? '<div class="pantry-macros">' + Math.round(it.per100g.calories) + ' kcal/100 g' +
         (it.per100g.protein != null ? ' · ' + round1num(it.per100g.protein) + 'g protein' : '') +
@@ -4848,7 +5164,30 @@
     }
   }
 
-  function pantrySetUnit(u){
+  function pantrySetUnit(u, convertQty){
+    // Batch 8 patch: same conversion as scanSetUnit — a brand-row
+    // prefill of 120 g stays 120 g when the chip is tapped to "pack"
+    // only if it becomes 1 pack. Mass<->mass and volume<->volume are
+    // exact; counted<->mass needs the label's pack weight. And only
+    // while the field still holds the prefilled value — a typed number
+    // follows the chip (batch 7 behaviour: type 2, tap kg, get 2 kg).
+    if (convertQty && u !== pantryUnit && pantryPrefillQty != null){
+      const el = $('#pantry-qty');
+      const cur = el ? parseFloat(el.value) : NaN;
+      if (!isNaN(cur) && Math.abs(cur - pantryPrefillQty) < 0.001){
+        const pg = (pendingScanItem && typeof pendingScanItem.packGrams === 'number') ? pendingScanItem.packGrams : null;
+        const mass = { g: 1, kg: 1000 }, vol = { ml: 1, l: 1000 };
+        const counted = { pieces: 1, bottle: 1, can: 1, pack: 1 };
+        let converted = false;
+        if (mass[pantryUnit] && mass[u]){ el.value = String(Math.round((cur * mass[pantryUnit] / mass[u]) * 100) / 100); converted = true; }
+        else if (vol[pantryUnit] && vol[u]){ el.value = String(Math.round((cur * vol[pantryUnit] / vol[u]) * 100) / 100); converted = true; }
+        else if (mass[pantryUnit] && counted[u] && pg != null){ el.value = String(Math.round((cur * mass[pantryUnit] / pg) * 100) / 100); converted = true; }
+        else if (counted[pantryUnit] && mass[u] && pg != null){ el.value = String(Math.round((cur * pg / mass[u]) * 100) / 100); converted = true; }
+        pantryPrefillQty = converted ? parseFloat(el.value) : null;
+      } else {
+        pantryPrefillQty = null;
+      }
+    }
     pantryUnit = u;
     const label = $('#pantry-unit-label');
     if (label) label.textContent = u;
@@ -4864,6 +5203,7 @@
     if (isNaN(v)) v = 0;
     v = Math.max(0, v + delta);
     el.value = String(Math.round(v * 100) / 100);
+    if (pantryPrefillQty != null) pantryPrefillQty = parseFloat(el.value);
   }
   // Batch 7: set by the unified scan flow (openPantryForBrandItem) so a
   // scanned packet's barcode/nutrition/product name survive into the
@@ -4881,16 +5221,23 @@
       name: name, qty: qty, unit: pantryUnit, location: pantryLoc,
       expiry: $('#pantry-expiry').value || '', lowAt: (isNaN(lowRaw) ? 1 : lowRaw),
       barcode: scan.barcode || '', productName: scan.productName || '', brand: scan.brand || '',
-      per100g: scan.per100g || null
+      per100g: scan.per100g || null,
+      // Batch 8 patch: a brand-row add keeps the pack weight when the
+      // chosen unit counts packets (scan.packGrams came from the label).
+      gramsPerUnit: (COUNTED_UNITS.indexOf(pantryUnit) > -1 && typeof scan.packGrams === 'number' && scan.packGrams > 0) ? scan.packGrams : null,
+      piecesPerPack: (COUNTED_UNITS.indexOf(pantryUnit) > -1 && typeof scan.piecesPerPack === 'number' && scan.piecesPerPack > 0) ? scan.piecesPerPack : null
     });
     if (!item) return;
     // Top-up per findTopUpTarget (batch 7): scanned = barcode+expiry must
     // match; manual = same name+unit, newest expiry wins.
     const existing = findTopUpTarget(item);
     if (existing){
-      existing.qty = Math.round((existing.qty + item.qty) * 100) / 100;
+      // Batch 8 patch: add in the row's own unit (see saveScanPantryForm).
+      existing.qty = Math.round((existing.qty + topUpAmountInRowUnit(existing, item)) * 100) / 100;
       if (item.expiry) existing.expiry = item.expiry;
       if (!existing.per100g && item.per100g) existing.per100g = item.per100g;
+      if (existing.gramsPerUnit == null && item.gramsPerUnit != null) existing.gramsPerUnit = item.gramsPerUnit;
+      if (existing.piecesPerPack == null && item.piecesPerPack != null) existing.piecesPerPack = item.piecesPerPack;
       if (!existing.barcode && item.barcode) existing.barcode = item.barcode;
       if (!existing.productName && item.productName) existing.productName = item.productName;
       if (!existing.brand && item.brand) existing.brand = item.brand;
@@ -4902,6 +5249,7 @@
     renderPantryList();
     $('#pantry-name').value = '';
     $('#pantry-qty').value = '1';
+    pantryPrefillQty = null;
     $('#pantry-expiry').value = '';
     $('#pantry-name').focus();
     showToast(existing ? ('Topped up ' + item.name + ' \u2014 now ' + formatPantryQty(existing)) : ('Added ' + item.name + ' to your pantry'));
@@ -4929,18 +5277,41 @@
     if (it) showToast('Removed ' + it.name + ' from your pantry');
   }
 
+  // Batch 8 patch: overlays keep their scroll position when hidden —
+  // hiding one does not reset .panel-scroll's scrollTop, so a reopened
+  // panel can open sliced mid-form with its title chopped off at the
+  // top. Every open resets the scroll to the top.
+  function resetOverlayScroll(overlayEl){
+    if (!overlayEl) return;
+    const s = overlayEl.querySelector ? overlayEl.querySelector('.panel-scroll') : null;
+    if (s) s.scrollTop = 0;
+  }
   function openPantry(prefill){
     if (prefill){
       if (prefill.name) $('#pantry-name').value = prefill.name;
-      if (prefill.qty != null) $('#pantry-qty').value = String(prefill.qty);
+      if (prefill.qty != null){ $('#pantry-qty').value = String(prefill.qty); pantryPrefillQty = prefill.qty; }
       if (prefill.unit) pantrySetUnit(prefill.unit);
       if (prefill.location) pantrySetLoc(prefill.location);
       if (prefill.expiry) $('#pantry-expiry').value = prefill.expiry;
       if (prefill.barcode || prefill.per100g || prefill.productName) pendingScanItem = {
-        barcode: prefill.barcode || '', productName: prefill.productName || '', brand: prefill.brand || '', per100g: prefill.per100g || null };
+        barcode: prefill.barcode || '', productName: prefill.productName || '', brand: prefill.brand || '', per100g: prefill.per100g || null,
+        packGrams: (typeof prefill.packGrams === 'number' && prefill.packGrams > 0) ? prefill.packGrams : null,
+        piecesPerPack: (typeof prefill.piecesPerPack === 'number' && prefill.piecesPerPack > 0) ? prefill.piecesPerPack : null };
+    } else {
+      pantryPrefillQty = null;
     }
     renderPantryList();
     $('#pantry-overlay').classList.add('open');
+    resetOverlayScroll($('#pantry-overlay'));
+    // Batch 8 patch: a tap on a brand row's "In your pantry" state jumps
+    // to that exact row instead of the top of the list.
+    if (pantryScrollToId){
+      const targetId = pantryScrollToId; pantryScrollToId = null;
+      setTimeout(function(){
+        const row = document.querySelector('#pantry-list .pantry-item[data-id="' + targetId + '"]');
+        if (row){ try{ row.scrollIntoView({ behavior: 'smooth', block: 'center' }); }catch(err){} }
+      }, 80);
+    }
     // Batch 8: NO autofocus here — on iPhone it pops the keyboard the
     // moment My pantry opens and covers the unit chips / Add button /
     // scan button. The keyboard appears only when she taps a field.
@@ -4962,8 +5333,52 @@
     if (unit === 'pack') unit = 'pack';
     return { qty: parseFloat(m[1]), unit: unit };
   }
+  // Batch 8 patch: grams in one pack from a pack-quantity string
+  // ("120 g", "1 kg"). null when the text has no mass weight — volume
+  // ("500 ml"), a count ("12 pieces"), or imperial ("32 OZ") have no
+  // gram weight on file.
+  function gramsFromPackQty(text){
+    if (!text) return null;
+    const p = parsePackQuantity(String(text));
+    if (p){
+      if (p.unit === 'g') return p.qty;
+      if (p.unit === 'kg') return p.qty * 1000;
+      return null;
+    }
+    // Imperial pack weights ("2 lbs", "16 oz") — parsePackQuantity only
+    // covers metric/count units. Rounded to the nearest gram.
+    const m = String(text).trim().match(/(\d+(?:\.\d+)?)\s*(lbs?|pounds?|oz|ounces?)\b/i);
+    if (!m) return null;
+    const u = m[2].toLowerCase();
+    if (u === 'lb' || u === 'lbs' || u === 'pound' || u === 'pounds') return Math.round(parseFloat(m[1]) * 453.59);
+    if (u === 'oz' || u === 'ounce' || u === 'ounces') return Math.round(parseFloat(m[1]) * 28.35);
+    return null;
+  }
+  // Batch 8 patch: slices per pack from the label, when it cleanly
+  // yields one — serving "2 slices (76 g)" + pack "2 lbs" (907 g) →
+  // 907 / 38 ≈ 24. Only when the serving text matches
+  // "N slices (G g)" exactly and the pack weight divided by the
+  // per-slice grams lands within 2% of a whole number; otherwise null
+  // (blank field, she fills it in). Never guesses from a vague string.
+  function piecesPerPackFromLabel(item){
+    if (!item) return null;
+    const serving = String(item.servingSize || '');
+    const m = serving.match(/(\d+)\s*slices?\s*\(\s*(\d+(?:\.\d+)?)\s*g\s*\)/i);
+    if (!m) return null;
+    const perServing = parseFloat(m[1]), gramsPerServing = parseFloat(m[2]);
+    if (!perServing || !gramsPerServing) return null;
+    const packGrams = gramsFromPackQty(item.quantity || '');
+    if (packGrams == null) return null;
+    const perPiece = gramsPerServing / perServing;
+    const total = packGrams / perPiece;
+    const rounded = Math.round(total);
+    if (rounded < 1) return null;
+    if (Math.abs(total - rounded) / rounded > 0.02) return null;
+    return rounded;
+  }
   function openPantryForBrandItem(item){
     const parsed = parsePackQuantity(item.quantity);
+    const packGrams = gramsFromPackQty(item.quantity || '');
     // The barcode overlay sits above the pantry overlay in the DOM, so
     // close it first or it would cover the prefilled form.
     if (barcodeOverlay) barcodeOverlay.classList.remove('open');
@@ -4971,7 +5386,7 @@
     // name and brand ride along (pendingScanItem) — they are no longer
     // dropped by the bridge into the pantry.
     openPantry({ name: item.name, qty: parsed ? parsed.qty : 1, unit: parsed ? parsed.unit : 'pieces',
-      barcode: item.barcode || '', productName: item.name, brand: item.brand || '', per100g: item.per100g || null });
+      barcode: item.barcode || '', productName: item.name, brand: item.brand || '', per100g: item.per100g || null, packGrams: packGrams, piecesPerPack: item.piecesPerPack || null });
     showToast('Prefilled from ' + item.name + ' \u2014 tap Add to pantry');
   }
 
@@ -4984,11 +5399,97 @@
   // there is at least enough on hand — never a partial deduction.
   const DEDUCT_BASE = { gram:['mass',1], g:['mass',1], kilogram:['mass',1000], kg:['mass',1000],
     milliliter:['vol',1], ml:['vol',1], liter:['vol',1000], l:['vol',1000] };
+  // Batch 8 patch: grams a line needs from one pantry row, in the row's
+  // own unit. One conversion, used by deduction: a packet count ("1
+  // packet Shin Ramyun", "1 can FAGE") or a bare count naming the packet
+  // is one packet of the row (gramsPerUnit / brand pack weight); a gram
+  // line against a counted row ("120 g" against an 18 pack row) is the
+  // same grams. Returns null when the line cannot be converted — the
+  // caller then leaves the line alone instead of deducting wrong.
+  function packetDeductCandidate(p, line){
+    const isPacket = !p.unit || !!PACKET_UNIT_SET[p.unit];
+    const u = p.unit ? (UNIT_ALIASES[p.unit] || p.unit) : null;
+    const isMassLine = u === 'gram' || u === 'kilogram';
+    const isSlice = p.unit === 'slice';
+    if (!isPacket && !isMassLine && !isSlice) return null;
+    let it = null;
+    if (p.pantryId){
+      const t = findPantryItemById(p.pantryId);
+      if (t && !pantryStatus(t).expired) it = t;
+    } else {
+      const live = livePantrySorted();
+      for (let i = 0; i < live.length; i++){
+        const cand = live[i];
+        const names = [toCore(cand.name), toCore(cand.productName || ''), toCore(cand.brand || '')].filter(Boolean);
+        if (names.some(function(n){ return coresMatch(p.ingredient, n); })){ it = cand; break; }
+      }
+    }
+    if (!it) return null;
+    // Only take over when the old paths cannot: a packet-count line, a
+    // slice line, or a mass line against a counted row. Otherwise the old
+    // exact paths run.
+    const rowIsCounted = !DEDUCT_BASE[it.unit];
+    if (!isPacket && !isSlice && !rowIsCounted) return null;
+    let grams = null;
+    if (isSlice){
+      // Batch 8 patch: a slice is one piece — pack grams / pieces per
+      // pack. Unknown piece count means no deduction, never a guess.
+      const gpp = gramsPerPieceForItem(it);
+      if (gpp == null) return null;
+      grams = p.quantity * gpp;
+    } else if (isPacket){
+      if (p.unit === 'piece'){
+        const gpp = gramsPerPieceForItem(it);
+        if (gpp != null) grams = p.quantity * gpp;
+        else {
+          const pg = packGramsForItem(it);
+          if (pg == null) return null;
+          grams = p.quantity * pg;
+        }
+      } else {
+        const pg = packGramsForItem(it);
+        if (pg == null) return null;
+        grams = p.quantity * pg;
+      }
+    } else {
+      grams = p.quantity * (u === 'gram' ? 1 : 1000);
+    }
+    const onHand = rowGramsOnHand(it);
+    if (onHand == null || onHand < grams) return null;
+    // Batch 8 patch: a slice/piece line is shown in slices in the cook
+    // confirmation ("use 2 slices") while needGrams carries the grams
+    // the deduction itself uses.
+    let displayNeed = rowDisplayNeed(it, grams), displayUnit = it.unit;
+    if ((isSlice || p.unit === 'piece') && gramsPerPieceForItem(it) != null){
+      displayNeed = p.quantity;
+      displayUnit = (p.unit === 'slice') ? (p.quantity === 1 ? 'slice' : 'slices') : (p.quantity === 1 ? 'piece' : 'pieces');
+    }
+    return { item: it, need: displayNeed, needUnit: displayUnit, needGrams: grams, line: line };
+  }
+  function rowGramsOnHand(it){
+    if (!it) return null;
+    if (it.unit === 'g') return it.qty;
+    if (it.unit === 'kg') return it.qty * 1000;
+    const gpu = gramsPerUnitOf(it);
+    return (gpu != null) ? it.qty * gpu : null;
+  }
+  function rowDisplayNeed(it, grams){
+    if (it.unit === 'g') return Math.round(grams * 100) / 100;
+    if (it.unit === 'kg') return Math.round((grams / 1000) * 100) / 100;
+    const gpu = gramsPerUnitOf(it);
+    return Math.round((grams / gpu) * 100) / 100;
+  }
   function deductCandidates(recipe){
     const out = [];
     flattenLines(recipe.ingredients).forEach(function(line){
       const p = parseIngredientLine(line);
-      if (!p || p.optional || p.quantity == null || !p.unit || !p.ingredient) return;
+      if (!p || p.optional || p.quantity == null || !p.ingredient) return;
+      // Batch 8 patch: packet counts and gram lines against counted rows
+      // convert through the pack weight first; the old exact paths below
+      // run only when this returns null.
+      const packetCand = packetDeductCandidate(p, line);
+      if (packetCand){ out.push(packetCand); return; }
+      if (!p.unit) return;
       const needUnit = (UNIT_ALIASES[p.unit] || p.unit);
       const base = DEDUCT_BASE[needUnit];
       if (!base) return;
@@ -5021,9 +5522,23 @@
   }
   async function deductFromPantry(cands){
     cands.forEach(function(c){
-      const itBase = DEDUCT_BASE[c.item.unit];
-      const needBase = DEDUCT_BASE[c.needUnit];
-      const deductInHaveUnit = (c.need * needBase[1]) / itBase[1];
+      let deductInHaveUnit;
+      if (c.needGrams != null){
+        // Batch 8 patch: packet/gram need, already in grams — convert
+        // into the row's own unit through its pack weight.
+        if (c.item.unit === 'g') deductInHaveUnit = c.needGrams;
+        else if (c.item.unit === 'kg') deductInHaveUnit = c.needGrams / 1000;
+        else {
+          const gpu = gramsPerUnitOf(c.item);
+          if (gpu == null) return;
+          deductInHaveUnit = c.needGrams / gpu;
+        }
+      } else {
+        const itBase = DEDUCT_BASE[c.item.unit];
+        const needBase = DEDUCT_BASE[c.needUnit];
+        if (!itBase || !needBase) return;
+        deductInHaveUnit = (c.need * needBase[1]) / itBase[1];
+      }
       c.item.qty = Math.max(0, Math.round((c.item.qty - deductInHaveUnit) * 100) / 100);
       c.item.updatedAt = Date.now();
     });
@@ -5034,14 +5549,24 @@
   // ---------- Pantry overlay wiring ----------
   $('#open-pantry-btn').addEventListener('click', function(){ openPantry(); });
 
-  // Batch 8: when the iOS keyboard opens, keep the focused field (and the
-  // buttons below it) reachable — scroll the field to the middle of the
-  // panel after the keyboard has resized the viewport (~350ms).
+  // Batch 8 patch: the batch 8 version scrolled EVERY focused field to
+  // the middle of the panel after 350ms, on every device — on a laptop
+  // there is no keyboard, so the scroll was pure harm (it yanked the
+  // panel and chopped the title the moment a field was clicked). Now it
+  // scrolls only when a virtual keyboard is plausibly open (the visual
+  // viewport is clearly shorter than the layout viewport) AND the field
+  // is actually outside the scroller's visible rect. On a desktop-width
+  // viewport with no keyboard this is a no-op.
   document.addEventListener('focusin', function(e){
     const t = e.target;
     if (!t || !t.matches || !t.matches('input, textarea, select')) return;
     const scroller = t.closest ? t.closest('.panel-scroll') : null;
     if (!scroller) return;
+    const vv = window.visualViewport;
+    const keyboardOpen = vv && vv.height < window.innerHeight - 100;
+    if (!keyboardOpen) return;
+    const fr = t.getBoundingClientRect(), sr = scroller.getBoundingClientRect();
+    if (fr.top >= sr.top && fr.bottom <= sr.bottom) return;
     setTimeout(function(){ try{ t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }catch(err){} }, 350);
   });
   // Batch 7b: scan from inside the Pantry itself — no recipe needed.
@@ -5057,8 +5582,9 @@
   $('#pantry-name').addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); pantryAddFromForm(); } });
   $('#pantry-qty-minus').addEventListener('click', function(){ bumpQtyInput(-1); });
   $('#pantry-qty-plus').addEventListener('click', function(){ bumpQtyInput(1); });
+  $('#pantry-qty').addEventListener('input', function(){ pantryPrefillQty = null; });
   $('#pantry-unit-chips').addEventListener('click', function(e){
-    const b = e.target.closest('.mini-chip'); if (b) pantrySetUnit(b.dataset.unit);
+    const b = e.target.closest('.mini-chip'); if (b) pantrySetUnit(b.dataset.unit, true);
   });
   $('#pantry-loc-chips').addEventListener('click', function(e){
     const b = e.target.closest('.mini-chip'); if (b) pantrySetLoc(b.dataset.loc);
